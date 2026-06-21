@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.telegram_service import send_notification
 
 load_dotenv()
@@ -52,11 +53,25 @@ def create_alert(alert: AlertRequest):
         f"Message: {alert.message}"
     )
 
-    result = send_notification(formatted_message)
+    telegram_result = send_notification(formatted_message)
+    delivery_status = "sent" if telegram_result.get("ok") else "failed"
+
+    alert_record = record_alert(
+        title=alert.title,
+        message=alert.message,
+        severity=alert.severity,
+        delivery_status=delivery_status,
+    )
 
     return {
-        "alert_sent": True,
-        "title": alert.title,
-        "severity": alert.severity,
-        "telegram_result": result,
+        "alert_sent": delivery_status == "sent",
+        "alert": alert_record,
+        "telegram_result": telegram_result,
+    }
+
+
+@app.get("/alerts")
+def get_alerts():
+    return {
+        "alerts": list_alerts()
     }
