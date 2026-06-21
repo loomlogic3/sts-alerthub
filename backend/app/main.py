@@ -1,9 +1,17 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 from backend.app.services.telegram_service import send_notification
 
 load_dotenv()
+
+
+class AlertRequest(BaseModel):
+    title: str
+    message: str
+    severity: str = "info"
+
 
 app = FastAPI(
     title="STS AlertHub",
@@ -33,3 +41,22 @@ def notify_test():
     )
 
     return result
+
+
+@app.post("/alerts")
+def create_alert(alert: AlertRequest):
+    formatted_message = (
+        f"🚨 STS AlertHub\n\n"
+        f"Title: {alert.title}\n"
+        f"Severity: {alert.severity}\n"
+        f"Message: {alert.message}"
+    )
+
+    result = send_notification(formatted_message)
+
+    return {
+        "alert_sent": True,
+        "title": alert.title,
+        "severity": alert.severity,
+        "telegram_result": result,
+    }
