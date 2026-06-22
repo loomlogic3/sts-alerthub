@@ -21,16 +21,8 @@ def create_website(
             )
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (
-                name,
-                url,
-                location,
-                real_world_usecase,
-                payment_status,
-                created_at,
-            ),
+            (name, url, location, real_world_usecase, payment_status, created_at),
         )
-
         website_id = cursor.lastrowid
 
     return {
@@ -38,8 +30,7 @@ def create_website(
         "name": name,
         "url": url,
         "location": location,
-        "real_world_usecase": real_world_usecase,
-        "payment_status": payment_status,
+        "real_world_usecase": real_world_usecase,        "real_worldtatus": payment_status,
         "is_active": True,
         "created_at": created_at,
         "last_checked_at": None,
@@ -68,3 +59,47 @@ def list_websites() -> list[dict]:
         websites.append(website)
 
     return websites
+
+
+def list_active_websites() -> list[dict]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT
+                id, name, url, location, real_world_usecase,
+                payment_status, is_active, created_at,
+                last_checked_at, last_status_code, last_status
+            FROM websites
+            WHERE is_active = 1
+            ORDER BY id ASC
+            """
+        ).fetchall()
+
+    websites = []
+    for row in rows:
+        website = dict(row)
+        website["is_active"] = bool(website["is_active"])
+        websites.append(website)
+
+    return websites
+
+
+def update_website_status(
+    website_id: int,
+    last_status: str,
+    last_status_code: int | None,
+) -> None:
+    checked_at = datetime.now(timezone.utc).isoformat()
+
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE websites
+            SET
+                last_checked_at = ?,
+                last_status_code = ?,
+                last_status = ?
+            WHERE id = ?
+            """,
+            (checked_at, last_status_code, last_status, website_id),
+        )

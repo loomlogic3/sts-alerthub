@@ -143,3 +143,72 @@ def add_website(request: WebsiteCreateRequest):
 @app.get("/websites")
 def get_websites():
     return {"websites": list_websites()}
+
+
+from backend.app.services.website_registry import (
+    list_active_websites,
+    update_website_status,
+)
+
+
+@app.post("/monitors/run-all")
+def run_all_monitors():
+    websites = list_active_websites()
+
+    checked = 0
+    healthy = 0
+    unhealthy = 0
+    alerts_sent = 0
+
+    for website in websites:
+        checked += 1
+
+        result = check_website(website["url"])
+
+        current_status = (
+            "healthy"
+            if result.get("ok")
+            else "unhealthy"
+        )
+
+        previous_status = website.get("last_status")
+
+        if current_status == "healthy":
+            healthy += 1
+        else:
+            unhealthy += 1
+
+        update_website_status(
+            website_id=website["id"],
+            last_status=current_status,
+            last_status_code=result.get("status_code"),
+        )
+
+        if (
+            previous_status == "healthy"
+            and current_status == "unhealthy"
+        ):
+            send_notification(
+                f"🚨 WEBSITE DOWN\n\n"
+                f"Name: {website['name']}\n"
+                f"URL: {website['url']}"
+            )
+            alerts_sent += 1
+
+        elif (
+            previous_status == "unhealthy"
+            and current_status == "healthy"
+        ):
+            send_notification(
+                f"✅ WEBSITE RECOVERED\n\n"
+                f"Name: {website['name']}\n"
+                f"URL: {website['url']}"
+            )
+            alerts_sent += 1
+
+    return {
+        "checked": checked,
+        "healthy": healthy,
+        "unhealthy": unhealthy,
+        "alerts_sent": alerts_sent,
+    }
