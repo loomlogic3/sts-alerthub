@@ -6,14 +6,7 @@ from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.telegram_service import send_notification
 from backend.app.services.website_monitor import check_website
-from backend.app.services.website_registry import (
-    create_website,
-    delete_website,
-    list_active_websites,
-    list_websites,
-    update_website,
-    update_website_status,
-)
+from backend.app.services.website_registry import create_website, list_websites
 
 load_dotenv()
 initialize_database()
@@ -36,15 +29,6 @@ class WebsiteCreateRequest(BaseModel):
     location: str | None = None
     real_world_usecase: str | None = None
     payment_status: str = "trial"
-
-
-class WebsiteUpdateRequest(BaseModel):
-    name: str | None = None
-    url: str | None = None
-    location: str | None = None
-    real_world_usecase: str | None = None
-    payment_status: str | None = None
-    is_active: bool | None = None
 
 
 app = FastAPI(
@@ -143,57 +127,6 @@ def check_website_endpoint(request: WebsiteCheckRequest):
     return {"website_check": result, "alert_sent": False}
 
 
-@app.post("/monitors/run-all")
-def run_all_monitors():
-    websites = list_active_websites()
-
-    checked = 0
-    healthy = 0
-    unhealthy = 0
-    alerts_sent = 0
-
-    for website in websites:
-        checked += 1
-        result = check_website(website["url"])
-
-        current_status = "healthy" if result.get("ok") else "unhealthy"
-        previous_status = website.get("last_status")
-
-        if current_status == "healthy":
-            healthy += 1
-        else:
-            unhealthy += 1
-
-        update_website_status(
-            website_id=website["id"],
-            last_status=current_status,
-            last_status_code=result.get("status_code"),
-        )
-
-        if previous_status == "healthy" and current_status == "unhealthy":
-            send_notification(
-                f"🚨 WEBSITE DOWN\n\n"
-                f"Name: {website['name']}\n"
-                f"URL: {website['url']}"
-            )
-            alerts_sent += 1
-
-        elif previous_status == "unhealthy" and current_status == "healthy":
-            send_notification(
-                f"✅ WEBSITE RECOVERED\n\n"
-                f"Name: {website['name']}\n"
-                f"URL: {website['url']}"
-            )
-            alerts_sent += 1
-
-    return {
-        "checked": checked,
-        "healthy": healthy,
-        "unhealthy": unhealthy,
-        "alerts_sent": alerts_sent,
-    }
-
-
 @app.post("/websites")
 def add_website(request: WebsiteCreateRequest):
     website = create_website(
@@ -212,17 +145,76 @@ def get_websites():
     return {"websites": list_websites()}
 
 
-@app.patch("/websites/{website_id}")
-def patch_website(website_id: int, request: WebsiteUpdateRequest):
-    updated = update_website(
-        website_id,
-        request.model_dump(exclude_none=True),
-    )
+from backend.app.services.website_registry import (
+    list_active_websites,
+    update_website_status,
+)
+
+
+@app.post("/monitors/run-all")
+def run_all_monitors():
+    websites = list_active_websites()
+
+    checked = 0
+    healthy = 0
+    unhealthy = 0
+    alerts_sent = 0
+
+    for website in websites:
+        checked += 1
+
+        result = check_website(website["url"])
+
+        current_status = (
+            "healthy"
+            if result.get("ok")
+            else "unhealthy"
+        )
+
+        previous_status = website.get("last_status")
+
+        if current_status == "healthy":
+            healthy += 1
+        else:
+            unhealthy += 1
+
+        update_website_status(
+            website_id=website["id"],
+            last_status=current_status,
+            last_status_code=result.get("status_code"),
+        )
+
+        if (
+            previous_status == "healthy"
+            and current_status == "unhealthy"
+        ):
+            send_notification(
+                f"🚨 WEBSITE DOWN\n\n"
+                f"Name: {website['name']}\n"
+                f"URL: {website['url']}"
+            )
+            alerts_sent += 1
+
+        elif (
+            previous_status == "unhealthy"
+            and current_status == "healthy"
+        ):
+            send_notification(
+                f"✅ WEBSITE RECOVERED\n\n"
+                f"Name: {website['name']}\n"
+                f"URL: {website['url']}"
+            )
+            alerts_sent += 1
 
     return {
-        "website_updated": updated,
-        "website_id": website_id,
+        "checked": checked,
+        "healthy": healthy,
+        "unhealthy": unhealthy,
+        "alerts_sent": alerts_sent,
     }
+
+
+from backend.app.services.website_registry import delete_website
 
 
 @app.delete("/websites/{website_id}")

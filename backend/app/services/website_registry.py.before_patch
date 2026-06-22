@@ -30,8 +30,7 @@ def create_website(
         "name": name,
         "url": url,
         "location": location,
-        "real_world_usecase": real_world_usecase,
-        "payment_status": payment_status,
+        "real_world_usecase": real_world_usecase,        "real_worldtatus": payment_status,
         "is_active": True,
         "created_at": created_at,
         "last_checked_at": None,
@@ -106,7 +105,23 @@ def update_website_status(
         )
 
 
+def delete_website(website_id: int) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            DELETE FROM websites
+            WHERE id = ?
+            """,
+            (website_id,),
+        )
+
+        return cursor.rowcount > 0
+
+
 def update_website(website_id: int, updates: dict) -> bool:
+    if not updates:
+        return False
+
     allowed_fields = {
         "name",
         "url",
@@ -116,20 +131,21 @@ def update_website(website_id: int, updates: dict) -> bool:
         "is_active",
     }
 
-    cleaned_updates = {
+    updates = {
         key: value
         for key, value in updates.items()
         if key in allowed_fields and value is not None
     }
 
-    if not cleaned_updates:
+    if not updates:
         return False
 
-    if "is_active" in cleaned_updates:
-        cleaned_updates["is_active"] = 1 if cleaned_updates["is_active"] else 0
+    set_clause = ", ".join(
+        f"{field} = ?"
+        for field in updates.keys()
+    )
 
-    set_clause = ", ".join(f"{field} = ?" for field in cleaned_updates.keys())
-    values = list(cleaned_updates.values())
+    values = list(updates.values())
     values.append(website_id)
 
     with get_connection() as connection:
@@ -140,19 +156,6 @@ def update_website(website_id: int, updates: dict) -> bool:
             WHERE id = ?
             """,
             values,
-        )
-
-        return cursor.rowcount > 0
-
-
-def delete_website(website_id: int) -> bool:
-    with get_connection() as connection:
-        cursor = connection.execute(
-            """
-            DELETE FROM websites
-            WHERE id = ?
-            """,
-            (website_id,),
         )
 
         return cursor.rowcount > 0
