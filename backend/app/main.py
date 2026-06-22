@@ -212,3 +212,16 @@ def run_all_monitors():
         "unhealthy": unhealthy,
         "alerts_sent": alerts_sent,
     }
+
+
+from backend.app.services.website_registry import delete_website
+
+
+@app.delete("/websites/{website_id}")
+def remove_website(website_id: int):
+    deleted = delete_website(website_id)
+
+    return {
+        "website_deleted": deleted,
+        "website_id": website_id,
+    }

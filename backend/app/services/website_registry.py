@@ -103,3 +103,16 @@ def update_website_status(
             """,
             (checked_at, last_status_code, last_status, website_id),
         )
+
+
+def delete_website(website_id: int) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            DELETE FROM websites
+            WHERE id = ?
+            """,
+            (website_id,),
+        )
+
+        return cursor.rowcount > 0
