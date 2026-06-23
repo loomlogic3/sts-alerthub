@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, field_validator
 
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
@@ -30,12 +30,32 @@ class WebsiteCheckRequest(BaseModel):
     alert_on_success: bool = False
 
 
+VALID_PAYMENT_STATUSES = {"trial", "paid", "overdue", "cancelled"}
+
+
+VALID_PAYMENT_STATUSES = {"trial", "paid", "overdue", "cancelled"}
+
+
 class WebsiteCreateRequest(BaseModel):
     name: str
     url: str
     location: str | None = None
     real_world_usecase: str | None = None
     payment_status: str = "trial"
+
+    @field_validator("payment_status")
+    @classmethod
+    def validate_payment_status(cls, value: str) -> str:
+        if value not in VALID_PAYMENT_STATUSES:
+            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
+        return value
+
+    @field_validator("payment_status")
+    @classmethod
+    def validate_payment_status(cls, value: str) -> str:
+        if value not in VALID_PAYMENT_STATUSES:
+            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
+        return value
 
 
 class WebsiteUpdateRequest(BaseModel):
@@ -45,6 +65,20 @@ class WebsiteUpdateRequest(BaseModel):
     real_world_usecase: str | None = None
     payment_status: str | None = None
     is_active: bool | None = None
+
+    @field_validator("payment_status")
+    @classmethod
+    def validate_payment_status(cls, value: str | None) -> str | None:
+        if value is not None and value not in VALID_PAYMENT_STATUSES:
+            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
+        return value
+
+    @field_validator("payment_status")
+    @classmethod
+    def validate_payment_status(cls, value: str | None) -> str | None:
+        if value is not None and value not in VALID_PAYMENT_STATUSES:
+            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
+        return value
 
 
 app = FastAPI(
