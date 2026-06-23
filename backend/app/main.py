@@ -1,9 +1,10 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from pydantic import BaseModel, field_validator, field_validator
+from pydantic import BaseModel, field_validator
 
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
+from backend.app.services.scheduler_service import start_scheduler
 from backend.app.services.telegram_service import send_notification
 from backend.app.services.website_monitor import check_website
 from backend.app.services.website_registry import (
@@ -18,6 +19,8 @@ from backend.app.services.website_registry import (
 load_dotenv()
 initialize_database()
 
+VALID_PAYMENT_STATUSES = {"trial", "paid", "overdue", "cancelled"}
+
 
 class AlertRequest(BaseModel):
     title: str
@@ -28,12 +31,6 @@ class AlertRequest(BaseModel):
 class WebsiteCheckRequest(BaseModel):
     url: str
     alert_on_success: bool = False
-
-
-VALID_PAYMENT_STATUSES = {"trial", "paid", "overdue", "cancelled"}
-
-
-VALID_PAYMENT_STATUSES = {"trial", "paid", "overdue", "cancelled"}
 
 
 class WebsiteCreateRequest(BaseModel):
@@ -47,14 +44,9 @@ class WebsiteCreateRequest(BaseModel):
     @classmethod
     def validate_payment_status(cls, value: str) -> str:
         if value not in VALID_PAYMENT_STATUSES:
-            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
-        return value
-
-    @field_validator("payment_status")
-    @classmethod
-    def validate_payment_status(cls, value: str) -> str:
-        if value not in VALID_PAYMENT_STATUSES:
-            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
+            raise ValueError(
+                "payment_status must be one of: trial, paid, overdue, cancelled"
+            )
         return value
 
 
@@ -70,21 +62,74 @@ class WebsiteUpdateRequest(BaseModel):
     @classmethod
     def validate_payment_status(cls, value: str | None) -> str | None:
         if value is not None and value not in VALID_PAYMENT_STATUSES:
-            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
-        return value
-
-    @field_validator("payment_status")
-    @classmethod
-    def validate_payment_status(cls, value: str | None) -> str | None:
-        if value is not None and value not in VALID_PAYMENT_STATUSES:
-            raise ValueError("payment_status must be one of: trial, paid, overdue, cancelled")
+            raise ValueError(
+                "payment_status must be one of: trial, paid, overdue, cancelled"
+            )
         return value
 
 
 app = FastAPI(
     title="STS AlertHub",
-    version="0.2.0",
+    version="0.3.0",
 )
+
+
+def run_monitor_job() -> dict:
+    websites = list_active_websites()
+
+    checked = 0
+    healthy = 0
+    unhealthy = 0
+    alerts_sent = 0
+
+    for website in websites:
+        checked += 1
+        result = check_website(website["url"])
+
+        current_status = "healthy" if result.get("ok") else "unhealthy"
+        previous_status = website.get("last_status")
+
+        if current_status == "healthy":
+            healthy += 1
+        else:
+            unhealthy += 1
+
+        update_website_status(
+            website_id=website["id"],
+            last_status=current_status,
+            last_status_code=result.get("status_code"),
+        )
+
+        if previous_status == "healthy" and current_status == "unhealthy":
+            send_notification(
+                f"🚨 WEBSITE DOWN\n\n"
+                f"Name: {website['name']}\n"
+                f"URL: {website['url']}"
+            )
+            alerts_sent += 1
+
+        elif previous_status == "unhealthy" and current_status == "healthy":
+            send_notification(
+                f"✅ WEBSITE RECOVERED\n\n"
+                f"Name: {website['name']}\n"
+                f"URL: {website['url']}"
+            )
+            alerts_sent += 1
+
+    result = {
+        "checked": checked,
+        "healthy": healthy,
+        "unhealthy": unhealthy,
+        "alerts_sent": alerts_sent,
+    }
+
+    print(f"Monitor job completed: {result}")
+    return result
+
+
+@app.on_event("startup")
+def startup_event():
+    start_scheduler(run_monitor_job)
 
 
 @app.get("/")
@@ -179,53 +224,7 @@ def check_website_endpoint(request: WebsiteCheckRequest):
 
 @app.post("/monitors/run-all")
 def run_all_monitors():
-    websites = list_active_websites()
-
-    checked = 0
-    healthy = 0
-    unhealthy = 0
-    alerts_sent = 0
-
-    for website in websites:
-        checked += 1
-        result = check_website(website["url"])
-
-        current_status = "healthy" if result.get("ok") else "unhealthy"
-        previous_status = website.get("last_status")
-
-        if current_status == "healthy":
-            healthy += 1
-        else:
-            unhealthy += 1
-
-        update_website_status(
-            website_id=website["id"],
-            last_status=current_status,
-            last_status_code=result.get("status_code"),
-        )
-
-        if previous_status == "healthy" and current_status == "unhealthy":
-            send_notification(
-                f"🚨 WEBSITE DOWN\n\n"
-                f"Name: {website['name']}\n"
-                f"URL: {website['url']}"
-            )
-            alerts_sent += 1
-
-        elif previous_status == "unhealthy" and current_status == "healthy":
-            send_notification(
-                f"✅ WEBSITE RECOVERED\n\n"
-                f"Name: {website['name']}\n"
-                f"URL: {website['url']}"
-            )
-            alerts_sent += 1
-
-    return {
-        "checked": checked,
-        "healthy": healthy,
-        "unhealthy": unhealthy,
-        "alerts_sent": alerts_sent,
-    }
+    return run_monitor_job()
 
 
 @app.post("/websites")
