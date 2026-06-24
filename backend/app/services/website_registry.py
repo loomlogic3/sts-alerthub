@@ -37,7 +37,15 @@ def create_website(
         "last_checked_at": None,
         "last_status_code": None,
         "last_status": None,
+        "last_alert_type": None,
+        "last_alert_at": None,
     }
+
+
+def _row_to_website(row) -> dict:
+    website = dict(row)
+    website["is_active"] = bool(website["is_active"])
+    return website
 
 
 def list_websites() -> list[dict]:
@@ -47,19 +55,14 @@ def list_websites() -> list[dict]:
             SELECT
                 id, name, url, location, real_world_usecase,
                 payment_status, is_active, created_at,
-                last_checked_at, last_status_code, last_status
+                last_checked_at, last_status_code, last_status,
+                last_alert_type, last_alert_at
             FROM websites
             ORDER BY id DESC
             """
         ).fetchall()
 
-    websites = []
-    for row in rows:
-        website = dict(row)
-        website["is_active"] = bool(website["is_active"])
-        websites.append(website)
-
-    return websites
+    return [_row_to_website(row) for row in rows]
 
 
 def list_active_websites() -> list[dict]:
@@ -69,20 +72,15 @@ def list_active_websites() -> list[dict]:
             SELECT
                 id, name, url, location, real_world_usecase,
                 payment_status, is_active, created_at,
-                last_checked_at, last_status_code, last_status
+                last_checked_at, last_status_code, last_status,
+                last_alert_type, last_alert_at
             FROM websites
             WHERE is_active = 1
             ORDER BY id ASC
             """
         ).fetchall()
 
-    websites = []
-    for row in rows:
-        website = dict(row)
-        website["is_active"] = bool(website["is_active"])
-        websites.append(website)
-
-    return websites
+    return [_row_to_website(row) for row in rows]
 
 
 def update_website_status(
@@ -103,6 +101,25 @@ def update_website_status(
             WHERE id = ?
             """,
             (checked_at, last_status_code, last_status, website_id),
+        )
+
+
+def record_website_alert(
+    website_id: int,
+    alert_type: str,
+) -> None:
+    alerted_at = datetime.now(timezone.utc).isoformat()
+
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE websites
+            SET
+                last_alert_type = ?,
+                last_alert_at = ?
+            WHERE id = ?
+            """,
+            (alert_type, alerted_at, website_id),
         )
 
 

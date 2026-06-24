@@ -1,3 +1,6 @@
+import os
+from datetime import datetime, timezone
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel, field_validator
@@ -12,6 +15,7 @@ from backend.app.services.website_registry import (
     delete_website,
     list_active_websites,
     list_websites,
+    record_website_alert,
     update_website,
     update_website_status,
 )
@@ -74,6 +78,64 @@ app = FastAPI(
 )
 
 
+def _can_send_alert(website: dict, alert_type: str) -> bool:
+    cooldown_seconds = int(os.getenv("ALERT_COOLDOWN_SECONDS", "900"))
+
+    last_alert_type = website.get("last_alert_type")
+    last_alert_at = website.get("last_alert_at")
+
+    if last_alert_type != alert_type:
+        return True
+
+    if not last_alert_at:
+        return True
+
+    try:
+        last_alert_time = datetime.fromisoformat(last_alert_at)
+    except ValueError:
+        return True
+
+    age_seconds = (
+        datetime.now(timezone.utc) - last_alert_time
+    ).total_seconds()
+
+    return age_seconds >= cooldown_seconds
+
+
+def _send_state_change_alert(
+    website: dict,
+    alert_type: str,
+) -> bool:
+    if not _can_send_alert(website, alert_type):
+        print(
+            f"Alert suppressed by cooldown: "
+            f"website_id={website['id']} alert_type={alert_type}"
+        )
+        return False
+
+    if alert_type == "down":
+        send_notification(
+            f"🚨 WEBSITE DOWN\n\n"
+            f"Name: {website['name']}\n"
+            f"URL: {website['url']}"
+        )
+    elif alert_type == "recovered":
+        send_notification(
+            f"✅ WEBSITE RECOVERED\n\n"
+            f"Name: {website['name']}\n"
+            f"URL: {website['url']}"
+        )
+    else:
+        return False
+
+    record_website_alert(
+        website_id=website["id"],
+        alert_type=alert_type,
+    )
+
+    return True
+
+
 def run_monitor_job() -> dict:
     websites = list_active_websites()
 
@@ -101,20 +163,12 @@ def run_monitor_job() -> dict:
         )
 
         if previous_status == "healthy" and current_status == "unhealthy":
-            send_notification(
-                f"🚨 WEBSITE DOWN\n\n"
-                f"Name: {website['name']}\n"
-                f"URL: {website['url']}"
-            )
-            alerts_sent += 1
+            if _send_state_change_alert(website, "down"):
+                alerts_sent += 1
 
         elif previous_status == "unhealthy" and current_status == "healthy":
-            send_notification(
-                f"✅ WEBSITE RECOVERED\n\n"
-                f"Name: {website['name']}\n"
-                f"URL: {website['url']}"
-            )
-            alerts_sent += 1
+            if _send_state_change_alert(website, "recovered"):
+                alerts_sent += 1
 
     result = {
         "checked": checked,
@@ -123,7 +177,7 @@ def run_monitor_job() -> dict:
         "alerts_sent": alerts_sent,
     }
 
-    print(f"Monitor job completed: {result}")
+    print(f"Monitor job completed: {result}", flush=True)
     return result
 
 

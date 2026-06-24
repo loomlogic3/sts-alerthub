@@ -11,6 +11,11 @@ def get_connection():
     return connection
 
 
+def _column_exists(connection, table_name: str, column_name: str) -> bool:
+    rows = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    return any(row["name"] == column_name for row in rows)
+
+
 def initialize_database():
     with get_connection() as connection:
         connection.execute(
@@ -30,3 +35,13 @@ def initialize_database():
             )
             """
         )
+
+        if not _column_exists(connection, "websites", "last_alert_type"):
+            connection.execute(
+                "ALTER TABLE websites ADD COLUMN last_alert_type TEXT"
+            )
+
+        if not _column_exists(connection, "websites", "last_alert_at"):
+            connection.execute(
+                "ALTER TABLE websites ADD COLUMN last_alert_at TEXT"
+            )
