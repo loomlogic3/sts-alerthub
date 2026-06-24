@@ -45,3 +45,17 @@ def initialize_database():
             connection.execute(
                 "ALTER TABLE websites ADD COLUMN last_alert_at TEXT"
             )
+
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS uptime_checks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                website_id INTEGER NOT NULL,
+                checked_at TEXT NOT NULL,
+                status TEXT NOT NULL,
+                status_code INTEGER,
+                response_time_ms INTEGER,
+                FOREIGN KEY (website_id) REFERENCES websites (id)
+            )
+            """
+        )

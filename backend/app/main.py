@@ -9,6 +9,11 @@ from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.scheduler_service import start_scheduler
 from backend.app.services.telegram_service import send_notification
+from backend.app.services.uptime_service import (
+    get_uptime_summary,
+    list_uptime_checks,
+    record_uptime_check,
+)
 from backend.app.services.website_monitor import check_website
 from backend.app.services.website_registry import (
     create_website,
@@ -74,7 +79,7 @@ class WebsiteUpdateRequest(BaseModel):
 
 app = FastAPI(
     title="STS AlertHub",
-    version="0.3.0",
+    version="0.4.0",
 )
 
 
@@ -109,7 +114,8 @@ def _send_state_change_alert(
     if not _can_send_alert(website, alert_type):
         print(
             f"Alert suppressed by cooldown: "
-            f"website_id={website['id']} alert_type={alert_type}"
+            f"website_id={website['id']} alert_type={alert_type}",
+            flush=True,
         )
         return False
 
@@ -150,6 +156,13 @@ def run_monitor_job() -> dict:
 
         current_status = "healthy" if result.get("ok") else "unhealthy"
         previous_status = website.get("last_status")
+
+        record_uptime_check(
+            website_id=website["id"],
+            status=current_status,
+            status_code=result.get("status_code"),
+            response_time_ms=result.get("response_time_ms"),
+        )
 
         if current_status == "healthy":
             healthy += 1
@@ -297,6 +310,19 @@ def add_website(request: WebsiteCreateRequest):
 @app.get("/websites")
 def get_websites():
     return {"websites": list_websites()}
+
+
+@app.get("/websites/{website_id}/uptime")
+def get_website_uptime(website_id: int):
+    return {
+        "website_id": website_id,
+        "uptime": list_uptime_checks(website_id),
+    }
+
+
+@app.get("/websites/{website_id}/uptime-summary")
+def get_website_uptime_summary(website_id: int):
+    return get_uptime_summary(website_id)
 
 
 @app.patch("/websites/{website_id}")
