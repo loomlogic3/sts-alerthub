@@ -59,3 +59,17 @@ def initialize_database():
             )
             """
         )
+
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS incidents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                website_id INTEGER NOT NULL,
+                started_at TEXT NOT NULL,
+                resolved_at TEXT,
+                status TEXT NOT NULL,
+                reason TEXT,
+                FOREIGN KEY (website_id) REFERENCES websites (id)
+            )
+            """
+        )

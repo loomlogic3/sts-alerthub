@@ -7,6 +7,11 @@ from pydantic import BaseModel, field_validator
 
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
+from backend.app.services.incident_service import (
+    list_incidents,
+    open_incident,
+    resolve_open_incident,
+)
 from backend.app.services.scheduler_service import start_scheduler
 from backend.app.services.telegram_service import send_notification
 from backend.app.services.uptime_service import (
@@ -176,10 +181,19 @@ def run_monitor_job() -> dict:
         )
 
         if previous_status == "healthy" and current_status == "unhealthy":
+            open_incident(
+                website_id=website["id"],
+                reason=f"Website became unhealthy. Details: {result}",
+            )
+
             if _send_state_change_alert(website, "down"):
                 alerts_sent += 1
 
         elif previous_status == "unhealthy" and current_status == "healthy":
+            resolve_open_incident(
+                website_id=website["id"],
+            )
+
             if _send_state_change_alert(website, "recovered"):
                 alerts_sent += 1
 
@@ -323,6 +337,19 @@ def get_website_uptime(website_id: int):
 @app.get("/websites/{website_id}/uptime-summary")
 def get_website_uptime_summary(website_id: int):
     return get_uptime_summary(website_id)
+
+
+@app.get("/incidents")
+def get_incidents():
+    return {"incidents": list_incidents()}
+
+
+@app.get("/websites/{website_id}/incidents")
+def get_website_incidents(website_id: int):
+    return {
+        "website_id": website_id,
+        "incidents": list_incidents(website_id=website_id),
+    }
 
 
 @app.patch("/websites/{website_id}")
