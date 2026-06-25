@@ -121,3 +121,48 @@ def list_incidents(
         rows = connection.execute(query, params).fetchall()
 
     return [_calculate_duration(dict(row)) for row in rows]
+
+
+def get_incident_summary(
+    website_id: int | None = None,
+) -> dict:
+    incidents = list_incidents(
+        website_id=website_id,
+        limit=10000,
+    )
+
+    total_incidents = len(incidents)
+    open_incidents = 0
+    resolved_incidents = 0
+    total_downtime_seconds = 0
+    longest_downtime_seconds = 0
+
+    for incident in incidents:
+        if incident["status"] == "open":
+            open_incidents += 1
+
+        if incident["status"] == "resolved":
+            resolved_incidents += 1
+
+            duration_seconds = incident.get("duration_seconds") or 0
+            total_downtime_seconds += duration_seconds
+
+            if duration_seconds > longest_downtime_seconds:
+                longest_downtime_seconds = duration_seconds
+
+    average_downtime_seconds = 0
+    if resolved_incidents > 0:
+        average_downtime_seconds = total_downtime_seconds / resolved_incidents
+
+    return {
+        "website_id": website_id,
+        "total_incidents": total_incidents,
+        "open_incidents": open_incidents,
+        "resolved_incidents": resolved_incidents,
+        "total_downtime_seconds": total_downtime_seconds,
+        "total_downtime_minutes": round(total_downtime_seconds / 60, 2),
+        "average_downtime_seconds": round(average_downtime_seconds, 2),
+        "average_downtime_minutes": round(average_downtime_seconds / 60, 2),
+        "longest_downtime_seconds": longest_downtime_seconds,
+        "longest_downtime_minutes": round(longest_downtime_seconds / 60, 2),
+    }

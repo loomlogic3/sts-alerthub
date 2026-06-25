@@ -8,6 +8,7 @@ from pydantic import BaseModel, field_validator
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.incident_service import (
+    get_incident_summary,
     list_incidents,
     open_incident,
     resolve_open_incident,
@@ -366,12 +367,22 @@ def get_incidents():
     return {"incidents": list_incidents()}
 
 
+@app.get("/incidents/summary")
+def get_all_incidents_summary():
+    return get_incident_summary()
+
+
 @app.get("/websites/{website_id}/incidents")
 def get_website_incidents(website_id: int):
     return {
         "website_id": website_id,
         "incidents": list_incidents(website_id=website_id),
     }
+
+
+@app.get("/websites/{website_id}/incidents/summary")
+def get_website_incidents_summary(website_id: int):
+    return get_incident_summary(website_id=website_id)
 
 
 @app.patch("/websites/{website_id}")
