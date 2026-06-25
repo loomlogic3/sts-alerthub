@@ -3,10 +3,31 @@ from datetime import datetime, timezone
 from backend.app.services.database import get_connection
 
 
-def open_incident(
-    website_id: int,
-    reason: str | None = None,
-) -> dict:
+def _calculate_duration(incident: dict) -> dict:
+    started_at = incident.get("started_at")
+    resolved_at = incident.get("resolved_at")
+
+    incident["duration_seconds"] = None
+    incident["duration_minutes"] = None
+
+    if not started_at or not resolved_at:
+        return incident
+
+    try:
+        started = datetime.fromisoformat(started_at)
+        resolved = datetime.fromisoformat(resolved_at)
+    except ValueError:
+        return incident
+
+    duration_seconds = int((resolved - started).total_seconds())
+
+    incident["duration_seconds"] = duration_seconds
+    incident["duration_minutes"] = round(duration_seconds / 60, 2)
+
+    return incident
+
+
+def open_incident(website_id: int, reason: str | None = None) -> dict:
     existing = get_open_incident(website_id)
     if existing:
         return existing
@@ -16,20 +37,10 @@ def open_incident(
     with get_connection() as connection:
         cursor = connection.execute(
             """
-            INSERT INTO incidents (
-                website_id,
-                started_at,
-                status,
-                reason
-            )
+            INSERT INTO incidents (website_id, started_at, status, reason)
             VALUES (?, ?, ?, ?)
             """,
-            (
-                website_id,
-                started_at,
-                "open",
-                reason,
-            ),
+            (website_id, started_at, "open", reason),
         )
 
         incident_id = cursor.lastrowid
@@ -41,12 +52,12 @@ def open_incident(
         "resolved_at": None,
         "status": "open",
         "reason": reason,
+        "duration_seconds": None,
+        "duration_minutes": None,
     }
 
 
-def resolve_open_incident(
-    website_id: int,
-) -> dict | None:
+def resolve_open_incident(website_id: int) -> dict | None:
     incident = get_open_incident(website_id)
     if not incident:
         return None
@@ -57,37 +68,23 @@ def resolve_open_incident(
         connection.execute(
             """
             UPDATE incidents
-            SET
-                resolved_at = ?,
-                status = ?
+            SET resolved_at = ?, status = ?
             WHERE id = ?
             """,
-            (
-                resolved_at,
-                "resolved",
-                incident["id"],
-            ),
+            (resolved_at, "resolved", incident["id"]),
         )
 
     incident["resolved_at"] = resolved_at
     incident["status"] = "resolved"
 
-    return incident
+    return _calculate_duration(incident)
 
 
-def get_open_incident(
-    website_id: int,
-) -> dict | None:
+def get_open_incident(website_id: int) -> dict | None:
     with get_connection() as connection:
         row = connection.execute(
             """
-            SELECT
-                id,
-                website_id,
-                started_at,
-                resolved_at,
-                status,
-                reason
+            SELECT id, website_id, started_at, resolved_at, status, reason
             FROM incidents
             WHERE website_id = ?
               AND status = 'open'
@@ -100,7 +97,7 @@ def get_open_incident(
     if row is None:
         return None
 
-    return dict(row)
+    return _calculate_duration(dict(row))
 
 
 def list_incidents(
@@ -108,13 +105,7 @@ def list_incidents(
     limit: int = 100,
 ) -> list[dict]:
     query = """
-        SELECT
-            id,
-            website_id,
-            started_at,
-            resolved_at,
-            status,
-            reason
+        SELECT id, website_id, started_at, resolved_at, status, reason
         FROM incidents
     """
     params: list = []
@@ -129,4 +120,4 @@ def list_incidents(
     with get_connection() as connection:
         rows = connection.execute(query, params).fetchall()
 
-    return [dict(row) for row in rows]
+    return [_calculate_duration(dict(row)) for row in rows]
