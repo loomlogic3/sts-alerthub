@@ -76,7 +76,10 @@ def get_uptime_summary(website_id: int) -> dict:
             SELECT
                 COUNT(*) as total_checks,
                 SUM(CASE WHEN status = 'healthy' THEN 1 ELSE 0 END) as healthy_checks,
-                SUM(CASE WHEN status = 'unhealthy' THEN 1 ELSE 0 END) as unhealthy_checks
+                SUM(CASE WHEN status = 'unhealthy' THEN 1 ELSE 0 END) as unhealthy_checks,
+                AVG(response_time_ms) as average_response_time_ms,
+                MIN(response_time_ms) as fastest_response_time_ms,
+                MAX(response_time_ms) as slowest_response_time_ms
             FROM uptime_checks
             WHERE website_id = ?
             """,
@@ -86,6 +89,10 @@ def get_uptime_summary(website_id: int) -> dict:
     total_checks = row["total_checks"] or 0
     healthy_checks = row["healthy_checks"] or 0
     unhealthy_checks = row["unhealthy_checks"] or 0
+
+    average_response_time_ms = row["average_response_time_ms"]
+    fastest_response_time_ms = row["fastest_response_time_ms"]
+    slowest_response_time_ms = row["slowest_response_time_ms"]
 
     uptime_percentage = 0.0
     if total_checks > 0:
@@ -97,4 +104,9 @@ def get_uptime_summary(website_id: int) -> dict:
         "healthy_checks": healthy_checks,
         "unhealthy_checks": unhealthy_checks,
         "uptime_percentage": uptime_percentage,
+        "average_response_time_ms": round(average_response_time_ms, 2)
+        if average_response_time_ms is not None
+        else None,
+        "fastest_response_time_ms": fastest_response_time_ms,
+        "slowest_response_time_ms": slowest_response_time_ms,
     }
