@@ -349,6 +349,45 @@ def get_websites():
     return {"websites": list_websites()}
 
 
+@app.get("/dashboard/summary")
+def get_dashboard_summary():
+    websites = list_websites()
+    incident_summary = get_incident_summary()
+    latest_incidents = list_incidents(limit=5)
+
+    total_websites = len(websites)
+    active_websites = 0
+    inactive_websites = 0
+    healthy_websites = 0
+    unhealthy_websites = 0
+    unknown_websites = 0
+
+    for website in websites:
+        if website.get("is_active"):
+            active_websites += 1
+        else:
+            inactive_websites += 1
+
+        if website.get("last_status") == "healthy":
+            healthy_websites += 1
+        elif website.get("last_status") == "unhealthy":
+            unhealthy_websites += 1
+        else:
+            unknown_websites += 1
+
+    return {
+        "service": "STS AlertHub",
+        "total_websites": total_websites,
+        "active_websites": active_websites,
+        "inactive_websites": inactive_websites,
+        "healthy_websites": healthy_websites,
+        "unhealthy_websites": unhealthy_websites,
+        "unknown_websites": unknown_websites,
+        "incident_summary": incident_summary,
+        "latest_incidents": latest_incidents,
+    }
+
+
 @app.get("/websites/{website_id}/uptime")
 def get_website_uptime(website_id: int):
     return {
