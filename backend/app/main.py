@@ -112,6 +112,28 @@ def _can_send_alert(website: dict, alert_type: str) -> bool:
     return age_seconds >= cooldown_seconds
 
 
+def _summarize_failure_reason(result: dict) -> str:
+    status_code = result.get("status_code")
+    error = str(result.get("error", "")).lower()
+
+    if status_code:
+        return f"HTTP {status_code}"
+
+    if "name or service not known" in error or "failed to resolve" in error:
+        return "DNS resolution failed"
+
+    if "timed out" in error or "timeout" in error:
+        return "Connection timeout"
+
+    if "connection refused" in error:
+        return "Connection refused"
+
+    if "ssl" in error or "certificate" in error:
+        return "SSL/certificate error"
+
+    return "Website unreachable"
+
+
 def _send_state_change_alert(
     website: dict,
     alert_type: str,
@@ -183,7 +205,7 @@ def run_monitor_job() -> dict:
         if previous_status == "healthy" and current_status == "unhealthy":
             open_incident(
                 website_id=website["id"],
-                reason=f"Website became unhealthy. Details: {result}",
+                reason=_summarize_failure_reason(result),
             )
 
             if _send_state_change_alert(website, "down"):
