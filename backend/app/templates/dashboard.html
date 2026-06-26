@@ -176,6 +176,7 @@
           <th>Payment</th>
           <th>Active</th>
           <th>Last Checked</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="websites_table">
@@ -221,6 +222,9 @@
             <td>${website.payment_status}</td>
             <td>${website.is_active ? 'Yes' : 'No'}</td>
             <td class="muted">${website.last_checked_at || 'Never'}</td>
+            <td>
+              <button onclick="checkNow()">Check Now</button>
+            </td>
           </tr>
         `;
       }).join('');
@@ -250,6 +254,14 @@
           </div>
         `;
       }).join('');
+    }
+
+    async function checkNow() {
+      await fetch('/monitors/run-all', {
+        method: 'POST'
+      });
+
+      await loadDashboard();
     }
 
     async function loadDashboard() {
