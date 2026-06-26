@@ -13,6 +13,37 @@
 
     h1 { margin-bottom: 5px; }
 
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .refresh-box {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: #cbd5e1;
+      font-size: 14px;
+      min-width: 230px;
+    }
+
+    .refresh-line {
+      margin-bottom: 6px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+      margin-right: 8px;
+    }
+
     .subtitle {
       color: #94a3b8;
       margin-bottom: 30px;
@@ -135,8 +166,17 @@
   </style>
 </head>
 <body>
-  <h1>STS AlertHub</h1>
-  <div class="subtitle">Monitoring dashboard summary</div>
+  <div class="topbar">
+    <div>
+      <h1>STS AlertHub</h1>
+      <div class="subtitle">Monitoring dashboard summary</div>
+    </div>
+
+    <div class="refresh-box">
+      <div class="refresh-line">Last updated: <span id="last_updated">-</span></div>
+      <div><span class="dot"></span>Auto refresh: ON (30s)</div>
+    </div>
+  </div>
 
   <div class="grid">
     <div class="card">
@@ -282,6 +322,9 @@
 
       document.getElementById('latest_incidents').innerHTML =
         renderIncidents(dashboardData.latest_incidents);
+
+      document.getElementById('last_updated').textContent =
+        new Date().toLocaleString();
     }
 
     loadDashboard();
