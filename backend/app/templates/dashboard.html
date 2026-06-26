@@ -11,9 +11,7 @@
       padding: 30px;
     }
 
-    h1 {
-      margin-bottom: 5px;
-    }
+    h1 { margin-bottom: 5px; }
 
     .subtitle {
       color: #94a3b8;
@@ -27,7 +25,7 @@
       margin-bottom: 30px;
     }
 
-    .card {
+    .card, .incident, .table-card {
       background: #111827;
       border: 1px solid #1f2937;
       border-radius: 12px;
@@ -48,13 +46,91 @@
     .healthy { color: #22c55e; }
     .unhealthy { color: #ef4444; }
     .warning { color: #f59e0b; }
+    .muted { color: #94a3b8; }
 
-    pre {
-      background: #020617;
-      padding: 16px;
-      border-radius: 12px;
-      overflow-x: auto;
-      border: 1px solid #1f2937;
+    .incident {
+      margin-bottom: 14px;
+    }
+
+    .incident-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      color: #cbd5e1;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    .open {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+
+    .resolved {
+      background: #14532d;
+      color: #bbf7d0;
+    }
+
+    .status-healthy {
+      background: #14532d;
+      color: #bbf7d0;
+    }
+
+    .status-unhealthy {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+
+    .status-unknown {
+      background: #713f12;
+      color: #fde68a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #1f2937;
+      font-size: 14px;
+    }
+
+    th {
+      color: #94a3b8;
+      font-weight: normal;
+    }
+
+    a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
     }
   </style>
 </head>
@@ -89,22 +165,111 @@
     </div>
   </div>
 
+  <h2>Monitored Websites</h2>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>URL</th>
+          <th>Status</th>
+          <th>Payment</th>
+          <th>Active</th>
+          <th>Last Checked</th>
+        </tr>
+      </thead>
+      <tbody id="websites_table">
+        <tr><td colspan="6">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <h2>Latest Incidents</h2>
-  <pre id="latest_incidents">Loading...</pre>
+  <div id="latest_incidents">Loading...</div>
 
   <script>
+    function formatValue(value) {
+      return value === null || value === undefined ? 'Still open' : value;
+    }
+
+    function statusBadge(status) {
+      const cleanStatus = status || 'unknown';
+      let badgeClass = 'status-unknown';
+
+      if (cleanStatus === 'healthy') {
+        badgeClass = 'status-healthy';
+      }
+
+      if (cleanStatus === 'unhealthy') {
+        badgeClass = 'status-unhealthy';
+      }
+
+      return `<span class="badge ${badgeClass}">${cleanStatus.toUpperCase()}</span>`;
+    }
+
+    function renderWebsites(websites) {
+      if (!websites.length) {
+        return '<tr><td colspan="6">No websites added yet.</td></tr>';
+      }
+
+      return websites.map((website) => {
+        return `
+          <tr>
+            <td><strong>${website.name}</strong></td>
+            <td><a href="${website.url}" target="_blank">${website.url}</a></td>
+            <td>${statusBadge(website.last_status)}</td>
+            <td>${website.payment_status}</td>
+            <td>${website.is_active ? 'Yes' : 'No'}</td>
+            <td class="muted">${website.last_checked_at || 'Never'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderIncidents(incidents) {
+      if (!incidents.length) {
+        return '<div class="incident">No incidents recorded yet.</div>';
+      }
+
+      return incidents.map((incident) => {
+        const badgeClass = incident.status === 'open' ? 'open' : 'resolved';
+
+        return `
+          <div class="incident">
+            <div class="incident-title">
+              Incident #${incident.id}
+              <span class="badge ${badgeClass}">${incident.status.toUpperCase()}</span>
+            </div>
+            <div class="meta">
+              <div><strong>Website ID:</strong> ${incident.website_id}</div>
+              <div><strong>Started:</strong> ${incident.started_at}</div>
+              <div><strong>Resolved:</strong> ${formatValue(incident.resolved_at)}</div>
+              <div><strong>Duration:</strong> ${formatValue(incident.duration_minutes)} minutes</div>
+              <div><strong>Reason:</strong> ${incident.reason}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     async function loadDashboard() {
-      const response = await fetch('/dashboard/summary');
-      const data = await response.json();
+      const dashboardResponse = await fetch('/dashboard/summary');
+      const dashboardData = await dashboardResponse.json();
 
-      document.getElementById('total_websites').textContent = data.total_websites;
-      document.getElementById('healthy_websites').textContent = data.healthy_websites;
-      document.getElementById('unhealthy_websites').textContent = data.unhealthy_websites;
-      document.getElementById('open_incidents').textContent = data.incident_summary.open_incidents;
-      document.getElementById('total_downtime_minutes').textContent = data.incident_summary.total_downtime_minutes;
+      const websitesResponse = await fetch('/websites');
+      const websitesData = await websitesResponse.json();
 
-      document.getElementById('latest_incidents').textContent =
-        JSON.stringify(data.latest_incidents, null, 2);
+      document.getElementById('total_websites').textContent = dashboardData.total_websites;
+      document.getElementById('healthy_websites').textContent = dashboardData.healthy_websites;
+      document.getElementById('unhealthy_websites').textContent = dashboardData.unhealthy_websites;
+      document.getElementById('open_incidents').textContent = dashboardData.incident_summary.open_incidents;
+      document.getElementById('total_downtime_minutes').textContent = dashboardData.incident_summary.total_downtime_minutes;
+
+      document.getElementById('websites_table').innerHTML =
+        renderWebsites(websitesData.websites);
+
+      document.getElementById('latest_incidents').innerHTML =
+        renderIncidents(dashboardData.latest_incidents);
     }
 
     loadDashboard();
