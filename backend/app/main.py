@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
 from backend.app.services.database import initialize_database
@@ -244,6 +245,11 @@ def root():
 @app.get("/health")
 def health():
     return {"healthy": True}
+
+
+@app.get("/dashboard")
+def dashboard_page():
+    return FileResponse("backend/app/templates/dashboard.html")
 
 
 @app.post("/notify/test")

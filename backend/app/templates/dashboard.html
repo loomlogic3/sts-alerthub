@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>STS AlertHub Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 30px;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .label {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .value {
+      font-size: 30px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .healthy { color: #22c55e; }
+    .unhealthy { color: #ef4444; }
+    .warning { color: #f59e0b; }
+
+    pre {
+      background: #020617;
+      padding: 16px;
+      border-radius: 12px;
+      overflow-x: auto;
+      border: 1px solid #1f2937;
+    }
+  </style>
+</head>
+<body>
+  <h1>STS AlertHub</h1>
+  <div class="subtitle">Monitoring dashboard summary</div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Total Websites</div>
+      <div id="total_websites" class="value">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Healthy</div>
+      <div id="healthy_websites" class="value healthy">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Unhealthy</div>
+      <div id="unhealthy_websites" class="value unhealthy">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Open Incidents</div>
+      <div id="open_incidents" class="value warning">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Total Downtime Minutes</div>
+      <div id="total_downtime_minutes" class="value">-</div>
+    </div>
+  </div>
+
+  <h2>Latest Incidents</h2>
+  <pre id="latest_incidents">Loading...</pre>
+
+  <script>
+    async function loadDashboard() {
+      const response = await fetch('/dashboard/summary');
+      const data = await response.json();
+
+      document.getElementById('total_websites').textContent = data.total_websites;
+      document.getElementById('healthy_websites').textContent = data.healthy_websites;
+      document.getElementById('unhealthy_websites').textContent = data.unhealthy_websites;
+      document.getElementById('open_incidents').textContent = data.incident_summary.open_incidents;
+      document.getElementById('total_downtime_minutes').textContent = data.incident_summary.total_downtime_minutes;
+
+      document.getElementById('latest_incidents').textContent =
+        JSON.stringify(data.latest_incidents, null, 2);
+    }
+
+    loadDashboard();
+    setInterval(loadDashboard, 30000);
+  </script>
+</body>
+</html>
