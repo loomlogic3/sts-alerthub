@@ -3,36 +3,90 @@
 <head>
   <title>STS AlertHub Dashboard</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
-      margin: 0;
-      padding: 30px;
+    :root {
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.92);
+      --panel-soft: rgba(17, 24, 39, 0.88);
+      --border: rgba(148, 163, 184, 0.16);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
     }
 
-    h1 { margin-bottom: 5px; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 34%),
+        radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 32%),
+        var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 32px;
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
 
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 20px;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      letter-spacing: -0.04em;
+    }
+
+    h2 {
+      margin: 28px 0 14px;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .brand-pill {
+      display: inline-block;
+      color: #bfdbfe;
+      background: rgba(37, 99, 235, 0.18);
+      border: 1px solid rgba(96, 165, 250, 0.24);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-bottom: 12px;
     }
 
     .refresh-box {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 12px;
-      padding: 14px 18px;
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
       color: #cbd5e1;
       font-size: 14px;
-      min-width: 230px;
+      min-width: 260px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
     }
 
     .refresh-line {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .dot {
@@ -40,195 +94,251 @@
       width: 9px;
       height: 9px;
       border-radius: 999px;
-      background: #22c55e;
+      background: var(--green);
       margin-right: 8px;
-    }
-
-    .subtitle {
-      color: #94a3b8;
-      margin-bottom: 30px;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.9);
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 16px;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
     }
 
     .card, .incident, .table-card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 12px;
-      padding: 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(10px);
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 90px;
+      height: 90px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.10);
     }
 
     .label {
-      color: #94a3b8;
-      font-size: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     .value {
-      font-size: 30px;
+      font-size: 34px;
       font-weight: bold;
-      margin-top: 8px;
+      margin-top: 10px;
+      letter-spacing: -0.04em;
     }
 
-    .healthy { color: #22c55e; }
-    .unhealthy { color: #ef4444; }
-    .warning { color: #f59e0b; }
-    .muted { color: #94a3b8; }
+    .healthy { color: var(--green); }
+    .unhealthy { color: var(--red); }
+    .warning { color: var(--amber); }
+    .muted { color: var(--muted); }
 
-    .incident {
-      margin-bottom: 14px;
-    }
-
-    .incident-title {
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-
-    .meta {
-      color: #cbd5e1;
-      line-height: 1.6;
-      font-size: 14px;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-left: 8px;
-    }
-
-    .open {
-      background: #7f1d1d;
-      color: #fecaca;
-    }
-
-    .resolved {
-      background: #14532d;
-      color: #bbf7d0;
-    }
-
-    .status-healthy {
-      background: #14532d;
-      color: #bbf7d0;
-    }
-
-    .status-unhealthy {
-      background: #7f1d1d;
-      color: #fecaca;
-    }
-
-    .status-unknown {
-      background: #713f12;
-      color: #fde68a;
+    .table-card {
+      overflow-x: auto;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 12px;
+      margin-top: 4px;
+      min-width: 1000px;
     }
 
     th, td {
       text-align: left;
-      padding: 12px;
-      border-bottom: 1px solid #1f2937;
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
       font-size: 14px;
+      vertical-align: middle;
     }
 
     th {
-      color: #94a3b8;
+      color: var(--muted);
       font-weight: normal;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+    }
+
+    tr:hover td {
+      background: rgba(30, 41, 59, 0.35);
     }
 
     a {
-      color: #60a5fa;
+      color: #93c5fd;
       text-decoration: none;
     }
 
     button {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
       color: white;
       border: none;
-      border-radius: 8px;
-      padding: 8px 12px;
+      border-radius: 10px;
+      padding: 9px 13px;
       cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 10px 26px rgba(37, 99, 235, 0.25);
     }
 
     button:hover {
-      background: #1d4ed8;
+      filter: brightness(1.1);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    .open, .status-unhealthy {
+      background: rgba(127, 29, 29, 0.75);
+      color: #fecaca;
+      border: 1px solid rgba(248, 113, 113, 0.25);
+    }
+
+    .resolved, .status-healthy {
+      background: rgba(20, 83, 45, 0.75);
+      color: #bbf7d0;
+      border: 1px solid rgba(74, 222, 128, 0.25);
+    }
+
+    .status-unknown {
+      background: rgba(113, 63, 18, 0.75);
+      color: #fde68a;
+      border: 1px solid rgba(251, 191, 36, 0.25);
+    }
+
+    .incident {
+      margin-bottom: 14px;
+      border-left: 4px solid rgba(59, 130, 246, 0.6);
+    }
+
+    .incident-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .meta {
+      color: #cbd5e1;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .footer {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 34px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 800px) {
+      body {
+        padding: 18px;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .refresh-box {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div>
-      <h1>STS AlertHub</h1>
-      <div class="subtitle">Monitoring dashboard summary</div>
+  <div class="shell">
+    <div class="topbar">
+      <div>
+        <div class="brand-pill">SynthThinkingSystems • Monitoring</div>
+        <h1>STS AlertHub</h1>
+        <div class="subtitle">Real-time website monitoring, incidents, uptime and response performance.</div>
+      </div>
+
+      <div class="refresh-box">
+        <div class="refresh-line">Last updated: <span id="last_updated">-</span></div>
+        <div><span class="dot"></span>Auto refresh: ON (30s)</div>
+      </div>
     </div>
 
-    <div class="refresh-box">
-      <div class="refresh-line">Last updated: <span id="last_updated">-</span></div>
-      <div><span class="dot"></span>Auto refresh: ON (30s)</div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">Total Websites</div>
+        <div id="total_websites" class="value">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Healthy</div>
+        <div id="healthy_websites" class="value healthy">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Unhealthy</div>
+        <div id="unhealthy_websites" class="value unhealthy">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Open Incidents</div>
+        <div id="open_incidents" class="value warning">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Downtime Minutes</div>
+        <div id="total_downtime_minutes" class="value">-</div>
+      </div>
+    </div>
+
+    <h2>Monitored Websites</h2>
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>URL</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Active</th>
+            <th>Uptime</th>
+            <th>Avg Response</th>
+            <th>Last Checked</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="websites_table">
+          <tr><td colspan="9">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Latest Incidents</h2>
+    <div id="latest_incidents">Loading...</div>
+
+    <div class="footer">
+      STS AlertHub • Control before power • Local monitoring dashboard
     </div>
   </div>
-
-  <div class="grid">
-    <div class="card">
-      <div class="label">Total Websites</div>
-      <div id="total_websites" class="value">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Healthy</div>
-      <div id="healthy_websites" class="value healthy">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Unhealthy</div>
-      <div id="unhealthy_websites" class="value unhealthy">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Open Incidents</div>
-      <div id="open_incidents" class="value warning">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Total Downtime Minutes</div>
-      <div id="total_downtime_minutes" class="value">-</div>
-    </div>
-  </div>
-
-  <h2>Monitored Websites</h2>
-  <div class="table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>URL</th>
-          <th>Status</th>
-          <th>Payment</th>
-          <th>Active</th>
-          <th>Uptime</th>
-          <th>Avg Response</th>
-          <th>Last Checked</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="websites_table">
-        <tr><td colspan="6">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h2>Latest Incidents</h2>
-  <div id="latest_incidents">Loading...</div>
 
   <script>
     function formatValue(value) {
@@ -252,7 +362,7 @@
 
     async function renderWebsites(websites) {
       if (!websites.length) {
-        return '<tr><td colspan="8">No websites added yet.</td></tr>';
+        return '<tr><td colspan="9">No websites added yet.</td></tr>';
       }
 
       const rows = [];
