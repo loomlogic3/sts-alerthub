@@ -234,16 +234,58 @@
       border-left: 4px solid rgba(59, 130, 246, 0.6);
     }
 
+    .incident-open {
+      border-left-color: var(--red);
+    }
+
+    .incident-resolved {
+      border-left-color: var(--green);
+    }
+
+    .incident-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
     .incident-title {
       font-weight: bold;
-      margin-bottom: 10px;
       font-size: 16px;
     }
 
-    .meta {
+    .incident-reason {
       color: #cbd5e1;
-      line-height: 1.7;
       font-size: 14px;
+    }
+
+    .incident-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .incident-field {
+      background: rgba(2, 6, 23, 0.35);
+      border: 1px solid rgba(148, 163, 184, 0.10);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .field-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      color: #e5e7eb;
+      font-size: 14px;
+      word-break: break-word;
     }
 
     .footer {
@@ -411,19 +453,42 @@
 
       return incidents.map((incident) => {
         const badgeClass = incident.status === 'open' ? 'open' : 'resolved';
+        const incidentClass = incident.status === 'open'
+          ? 'incident-open'
+          : 'incident-resolved';
 
         return `
-          <div class="incident">
-            <div class="incident-title">
-              Incident #${incident.id}
-              <span class="badge ${badgeClass}">${incident.status.toUpperCase()}</span>
+          <div class="incident ${incidentClass}">
+            <div class="incident-head">
+              <div>
+                <div class="incident-title">
+                  Incident #${incident.id}
+                  <span class="badge ${badgeClass}">${incident.status.toUpperCase()}</span>
+                </div>
+                <div class="incident-reason">${incident.reason}</div>
+              </div>
             </div>
-            <div class="meta">
-              <div><strong>Website ID:</strong> ${incident.website_id}</div>
-              <div><strong>Started:</strong> ${incident.started_at}</div>
-              <div><strong>Resolved:</strong> ${formatValue(incident.resolved_at)}</div>
-              <div><strong>Duration:</strong> ${formatValue(incident.duration_minutes)} minutes</div>
-              <div><strong>Reason:</strong> ${incident.reason}</div>
+
+            <div class="incident-grid">
+              <div class="incident-field">
+                <div class="field-label">Website ID</div>
+                <div class="field-value">${incident.website_id}</div>
+              </div>
+
+              <div class="incident-field">
+                <div class="field-label">Started</div>
+                <div class="field-value">${incident.started_at}</div>
+              </div>
+
+              <div class="incident-field">
+                <div class="field-label">Resolved</div>
+                <div class="field-value">${formatValue(incident.resolved_at)}</div>
+              </div>
+
+              <div class="incident-field">
+                <div class="field-label">Duration</div>
+                <div class="field-value">${formatValue(incident.duration_minutes)} minutes</div>
+              </div>
             </div>
           </div>
         `;
