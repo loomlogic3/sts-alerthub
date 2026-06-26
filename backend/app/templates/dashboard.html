@@ -215,6 +215,8 @@
           <th>Status</th>
           <th>Payment</th>
           <th>Active</th>
+          <th>Uptime</th>
+          <th>Avg Response</th>
           <th>Last Checked</th>
           <th>Action</th>
         </tr>
@@ -248,26 +250,48 @@
       return `<span class="badge ${badgeClass}">${cleanStatus.toUpperCase()}</span>`;
     }
 
-    function renderWebsites(websites) {
+    async function renderWebsites(websites) {
       if (!websites.length) {
-        return '<tr><td colspan="6">No websites added yet.</td></tr>';
+        return '<tr><td colspan="8">No websites added yet.</td></tr>';
       }
 
-      return websites.map((website) => {
-        return `
+      const rows = [];
+
+      for (const website of websites) {
+        let uptime = '-';
+        let avgResponse = '-';
+
+        try {
+          const summaryResponse = await fetch(`/websites/${website.id}/uptime-summary`);
+          const summary = await summaryResponse.json();
+
+          uptime = `${summary.uptime_percentage}%`;
+          avgResponse = summary.average_response_time_ms === null
+            ? '-'
+            : `${summary.average_response_time_ms} ms`;
+        } catch (error) {
+          uptime = 'Error';
+          avgResponse = 'Error';
+        }
+
+        rows.push(`
           <tr>
             <td><strong>${website.name}</strong></td>
             <td><a href="${website.url}" target="_blank">${website.url}</a></td>
             <td>${statusBadge(website.last_status)}</td>
             <td>${website.payment_status}</td>
             <td>${website.is_active ? 'Yes' : 'No'}</td>
+            <td>${uptime}</td>
+            <td>${avgResponse}</td>
             <td class="muted">${website.last_checked_at || 'Never'}</td>
             <td>
               <button onclick="checkNow()">Check Now</button>
             </td>
           </tr>
-        `;
-      }).join('');
+        `);
+      }
+
+      return rows.join('');
     }
 
     function renderIncidents(incidents) {
@@ -318,7 +342,7 @@
       document.getElementById('total_downtime_minutes').textContent = dashboardData.incident_summary.total_downtime_minutes;
 
       document.getElementById('websites_table').innerHTML =
-        renderWebsites(websitesData.websites);
+        await renderWebsites(websitesData.websites);
 
       document.getElementById('latest_incidents').innerHTML =
         renderIncidents(dashboardData.latest_incidents);
