@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Website Detail - STS AlertHub</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 32px;
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    a {
+      color: #93c5fd;
+      text-decoration: none;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #93c5fd;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .label {
+      color: #94a3b8;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .value {
+      font-size: 26px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .healthy { color: #22c55e; }
+    .unhealthy { color: #ef4444; }
+    .warning { color: #f59e0b; }
+
+    pre {
+      white-space: pre-wrap;
+      background: #0f172a;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 12px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    button {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a href="/dashboard" class="back">← Back to dashboard</a>
+
+    <h1 id="website_name">Website Detail</h1>
+    <p id="website_url"></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Current Status</div>
+        <div id="current_status" class="value">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Uptime</div>
+        <div id="uptime_percentage" class="value">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Average Response</div>
+        <div id="avg_response" class="value">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Open Incidents</div>
+        <div id="open_incidents" class="value warning">-</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <button onclick="checkNow()">Check Now</button>
+    </div>
+
+    <div class="card">
+      <h2>Recent Uptime Checks</h2>
+      <pre id="uptime_checks">Loading...</pre>
+    </div>
+
+    <div class="card">
+      <h2>Recent Incidents</h2>
+      <pre id="incidents">Loading...</pre>
+    </div>
+  </div>
+
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const websiteId = pathParts[2];
+
+    function statusClass(status) {
+      if (status === 'healthy') return 'healthy';
+      if (status === 'unhealthy') return 'unhealthy';
+      return 'warning';
+    }
+
+    async function checkNow() {
+      await fetch('/monitors/run-all', { method: 'POST' });
+      await loadDetail();
+    }
+
+    async function loadDetail() {
+      const websitesResponse = await fetch('/websites');
+      const websitesData = await websitesResponse.json();
+
+      const website = websitesData.websites.find(
+        (item) => String(item.id) === String(websiteId)
+      );
+
+      if (!website) {
+        document.getElementById('website_name').textContent = 'Website not found';
+        return;
+      }
+
+      const uptimeSummaryResponse = await fetch(`/websites/${websiteId}/uptime-summary`);
+      const uptimeSummary = await uptimeSummaryResponse.json();
+
+      const incidentsSummaryResponse = await fetch(`/websites/${websiteId}/incidents/summary`);
+      const incidentsSummary = await incidentsSummaryResponse.json();
+
+      const uptimeResponse = await fetch(`/websites/${websiteId}/uptime`);
+      const uptimeData = await uptimeResponse.json();
+
+      const incidentsResponse = await fetch(`/websites/${websiteId}/incidents`);
+      const incidentsData = await incidentsResponse.json();
+
+      document.getElementById('website_name').textContent = website.name;
+      document.getElementById('website_url').innerHTML =
+        `<a href="${website.url}" target="_blank">${website.url}</a>`;
+
+      const currentStatus = document.getElementById('current_status');
+      currentStatus.textContent = website.last_status || 'unknown';
+      currentStatus.className = `value ${statusClass(website.last_status)}`;
+
+      document.getElementById('uptime_percentage').textContent =
+        `${uptimeSummary.uptime_percentage}%`;
+
+      document.getElementById('avg_response').textContent =
+        uptimeSummary.average_response_time_ms === null
+          ? '-'
+          : `${uptimeSummary.average_response_time_ms} ms`;
+
+      document.getElementById('open_incidents').textContent =
+        incidentsSummary.open_incidents;
+
+      document.getElementById('uptime_checks').textContent =
+        JSON.stringify(uptimeData.uptime.slice(0, 10), null, 2);
+
+      document.getElementById('incidents').textContent =
+        JSON.stringify(incidentsData.incidents.slice(0, 10), null, 2);
+    }
+
+    loadDetail();
+    setInterval(loadDetail, 30000);
+  </script>
+</body>
+</html>

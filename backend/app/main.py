@@ -252,6 +252,11 @@ def dashboard_page():
     return FileResponse("backend/app/templates/dashboard.html")
 
 
+@app.get("/websites/{website_id}/detail")
+def website_detail_page(website_id: int):
+    return FileResponse("backend/app/templates/website_detail.html")
+
+
 @app.post("/notify/test")
 def notify_test():
     return send_notification("🚀 AlertHub test endpoint triggered successfully.")
