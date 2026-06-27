@@ -73,3 +73,16 @@ def initialize_database():
             )
             """
         )
+
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'admin',
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL
+            )
+            """
+        )

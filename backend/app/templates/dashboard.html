@@ -390,6 +390,33 @@
   </div>
 
   <script>
+
+    function cleanReason(reason) {
+      const text = String(reason || 'Website unreachable');
+
+      if (text.toLowerCase().includes('failed to resolve')) {
+        return 'DNS resolution failed';
+      }
+
+      if (text.toLowerCase().includes('connection refused')) {
+        return 'Connection refused';
+      }
+
+      if (text.toLowerCase().includes('timeout')) {
+        return 'Connection timeout';
+      }
+
+      if (text.toLowerCase().includes('ssl') || text.toLowerCase().includes('certificate')) {
+        return 'SSL/certificate error';
+      }
+
+      if (text.length > 80) {
+        return 'Website unreachable';
+      }
+
+      return text;
+    }
+
     function formatValue(value) {
       return value === null || value === undefined ? 'Still open' : value;
     }
@@ -473,7 +500,7 @@
                   Incident #${incident.id}
                   <span class="badge ${badgeClass}">${incident.status.toUpperCase()}</span>
                 </div>
-                <div class="incident-reason">${incident.reason}</div>
+                <div class="incident-reason">${cleanReason(incident.reason)}</div>
               </div>
             </div>
 

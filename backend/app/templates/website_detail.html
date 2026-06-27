@@ -3,16 +3,35 @@
 <head>
   <title>Website Detail - STS AlertHub</title>
   <style>
+    :root {
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.92);
+      --border: rgba(148, 163, 184, 0.16);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
-      background: #020617;
-      color: #e5e7eb;
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 34%),
+        radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 32%),
+        var(--bg);
+      color: var(--text);
       margin: 0;
       padding: 32px;
+      min-height: 100vh;
     }
 
     .shell {
-      max-width: 1200px;
+      max-width: 1300px;
       margin: 0 auto;
     }
 
@@ -27,45 +46,55 @@
       color: #93c5fd;
     }
 
-    .card {
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(148, 163, 184, 0.16);
+    h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      letter-spacing: -0.04em;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .card, .table-card, .incident {
+      background: var(--panel);
+      border: 1px solid var(--border);
       border-radius: 18px;
       padding: 20px;
       margin-bottom: 18px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
+      margin-bottom: 18px;
     }
 
     .label {
-      color: #94a3b8;
+      color: var(--muted);
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
     .value {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: bold;
       margin-top: 8px;
     }
 
-    .healthy { color: #22c55e; }
-    .unhealthy { color: #ef4444; }
-    .warning { color: #f59e0b; }
-
-    pre {
-      white-space: pre-wrap;
-      background: #0f172a;
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      border-radius: 12px;
-      padding: 16px;
-      overflow-x: auto;
-    }
+    .healthy { color: var(--green); }
+    .unhealthy { color: var(--red); }
+    .warning { color: var(--amber); }
+    .muted { color: var(--muted); }
 
     button {
       background: linear-gradient(135deg, #2563eb, #7c3aed);
@@ -76,6 +105,99 @@
       cursor: pointer;
       font-weight: bold;
     }
+
+    button:hover { filter: brightness(1.1); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 13px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: normal;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+    }
+
+    tr:hover td {
+      background: rgba(30, 41, 59, 0.35);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+    }
+
+    .status-healthy, .resolved {
+      background: rgba(20, 83, 45, 0.75);
+      color: #bbf7d0;
+      border: 1px solid rgba(74, 222, 128, 0.25);
+    }
+
+    .status-unhealthy, .open {
+      background: rgba(127, 29, 29, 0.75);
+      color: #fecaca;
+      border: 1px solid rgba(248, 113, 113, 0.25);
+    }
+
+    .incident {
+      border-left: 4px solid var(--blue);
+    }
+
+    .incident.open-border {
+      border-left-color: var(--red);
+    }
+
+    .incident.resolved-border {
+      border-left-color: var(--green);
+    }
+
+    .incident-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .incident-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .field {
+      background: rgba(2, 6, 23, 0.35);
+      border: 1px solid rgba(148, 163, 184, 0.10);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .field-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      word-break: break-word;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -83,7 +205,7 @@
     <a href="/dashboard" class="back">← Back to dashboard</a>
 
     <h1 id="website_name">Website Detail</h1>
-    <p id="website_url"></p>
+    <div id="website_url" class="subtitle"></div>
 
     <div class="grid">
       <div class="card">
@@ -111,25 +233,137 @@
       <button onclick="checkNow()">Check Now</button>
     </div>
 
-    <div class="card">
+    <div class="table-card">
       <h2>Recent Uptime Checks</h2>
-      <pre id="uptime_checks">Loading...</pre>
+      <table>
+        <thead>
+          <tr>
+            <th>Checked At</th>
+            <th>Status</th>
+            <th>Status Code</th>
+            <th>Response Time</th>
+          </tr>
+        </thead>
+        <tbody id="uptime_checks">
+          <tr><td colspan="4">Loading...</td></tr>
+        </tbody>
+      </table>
     </div>
 
-    <div class="card">
-      <h2>Recent Incidents</h2>
-      <pre id="incidents">Loading...</pre>
-    </div>
+    <h2>Recent Incidents</h2>
+    <div id="incidents">Loading...</div>
   </div>
 
   <script>
     const pathParts = window.location.pathname.split('/');
     const websiteId = pathParts[2];
 
+
+    function cleanReason(reason) {
+      const text = String(reason || 'Website unreachable');
+
+      if (text.toLowerCase().includes('failed to resolve')) {
+        return 'DNS resolution failed';
+      }
+
+      if (text.toLowerCase().includes('connection refused')) {
+        return 'Connection refused';
+      }
+
+      if (text.toLowerCase().includes('timeout')) {
+        return 'Connection timeout';
+      }
+
+      if (text.toLowerCase().includes('ssl') || text.toLowerCase().includes('certificate')) {
+        return 'SSL/certificate error';
+      }
+
+      if (text.length > 80) {
+        return 'Website unreachable';
+      }
+
+      return text;
+    }
+
+    function formatValue(value) {
+      return value === null || value === undefined ? 'Still open' : value;
+    }
+
     function statusClass(status) {
       if (status === 'healthy') return 'healthy';
       if (status === 'unhealthy') return 'unhealthy';
       return 'warning';
+    }
+
+    function statusBadge(status) {
+      const cleanStatus = status || 'unknown';
+      const badgeClass = cleanStatus === 'healthy'
+        ? 'status-healthy'
+        : 'status-unhealthy';
+
+      return `<span class="badge ${badgeClass}">${cleanStatus.toUpperCase()}</span>`;
+    }
+
+    function renderUptimeChecks(checks) {
+      if (!checks.length) {
+        return '<tr><td colspan="4">No uptime checks yet.</td></tr>';
+      }
+
+      return checks.slice(0, 10).map((check) => {
+        return `
+          <tr>
+            <td>${check.checked_at}</td>
+            <td>${statusBadge(check.status)}</td>
+            <td>${formatValue(check.status_code)}</td>
+            <td>${formatValue(check.response_time_ms)} ms</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderIncidents(incidents) {
+      if (!incidents.length) {
+        return '<div class="incident">No incidents recorded yet.</div>';
+      }
+
+      return incidents.slice(0, 10).map((incident) => {
+        const badgeClass = incident.status === 'open' ? 'open' : 'resolved';
+        const borderClass = incident.status === 'open'
+          ? 'open-border'
+          : 'resolved-border';
+
+        return `
+          <div class="incident ${borderClass}">
+            <div class="incident-title">
+              Incident #${incident.id}
+              <span class="badge ${badgeClass}">${incident.status.toUpperCase()}</span>
+            </div>
+            <div class="muted">${cleanReason(incident.reason)}</div>
+
+            <div class="incident-grid">
+              <div class="field">
+                <div class="field-label">Started</div>
+                <div class="field-value">${incident.started_at}</div>
+              </div>
+
+              <div class="field">
+                <div class="field-label">Resolved</div>
+                <div class="field-value">${formatValue(incident.resolved_at)}</div>
+              </div>
+
+              <div class="field">
+                <div class="field-label">Duration</div>
+                <div class="field-value">${formatValue(incident.duration_minutes)} minutes</div>
+              </div>
+
+              <div class="field">
+                <div class="field-label">Reason</div>
+                <div class="field-value">${cleanReason(incident.reason)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     async function checkNow() {
@@ -181,11 +415,11 @@
       document.getElementById('open_incidents').textContent =
         incidentsSummary.open_incidents;
 
-      document.getElementById('uptime_checks').textContent =
-        JSON.stringify(uptimeData.uptime.slice(0, 10), null, 2);
+      document.getElementById('uptime_checks').innerHTML =
+        renderUptimeChecks(uptimeData.uptime);
 
-      document.getElementById('incidents').textContent =
-        JSON.stringify(incidentsData.incidents.slice(0, 10), null, 2);
+      document.getElementById('incidents').innerHTML =
+        renderIncidents(incidentsData.incidents);
     }
 
     loadDetail();
