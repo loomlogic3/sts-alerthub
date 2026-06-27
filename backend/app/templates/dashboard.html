@@ -201,6 +201,13 @@
       filter: brightness(1.1);
     }
 
+    .secondary-button {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      box-shadow: none;
+      margin-left: 8px;
+    }
+
     .badge {
       display: inline-block;
       padding: 5px 9px;
@@ -438,6 +445,7 @@
             <td class="muted">${website.last_checked_at || 'Never'}</td>
             <td>
               <button onclick="checkNow()">Check Now</button>
+              <button class="secondary-button" onclick="viewWebsite(${website.id})">View</button>
             </td>
           </tr>
         `);
@@ -493,6 +501,10 @@
           </div>
         `;
       }).join('');
+    }
+
+    function viewWebsite(websiteId) {
+      alert(`Website detail page coming next for website #${websiteId}`);
     }
 
     async function checkNow() {
