@@ -2,12 +2,14 @@ import os
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
+from backend.app.services.password_service import hash_password
+from backend.app.services.user_service import create_user, get_user_by_email, list_users
 from backend.app.services.incident_service import (
     get_incident_summary,
     list_incidents,
@@ -47,6 +49,11 @@ class AlertRequest(BaseModel):
 class WebsiteCheckRequest(BaseModel):
     url: str
     alert_on_success: bool = False
+
+
+class AdminCreateRequest(BaseModel):
+    email: str
+    password: str
 
 
 class WebsiteCreateRequest(BaseModel):
@@ -245,6 +252,35 @@ def root():
 @app.get("/health")
 def health():
     return {"healthy": True}
+
+
+@app.post("/auth/create-admin")
+def create_admin_user(request: AdminCreateRequest):
+    existing_user = get_user_by_email(request.email)
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="User already exists",
+        )
+
+    password_hash = hash_password(request.password)
+
+    user = create_user(
+        email=request.email,
+        password_hash=password_hash,
+        role="admin",
+    )
+
+    return {
+        "user_created": True,
+        "user": user,
+    }
+
+
+@app.get("/auth/users")
+def get_auth_users():
+    return {"users": list_users()}
 
 
 @app.get("/dashboard")
