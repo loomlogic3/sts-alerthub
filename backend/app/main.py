@@ -8,7 +8,7 @@ from pydantic import BaseModel, field_validator
 
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
-from backend.app.services.password_service import hash_password
+from backend.app.services.password_service import hash_password, verify_password
 from backend.app.services.user_service import create_user, get_user_by_email, list_users
 from backend.app.services.incident_service import (
     get_incident_summary,
@@ -52,6 +52,11 @@ class WebsiteCheckRequest(BaseModel):
 
 
 class AdminCreateRequest(BaseModel):
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
     email: str
     password: str
 
@@ -281,6 +286,44 @@ def create_admin_user(request: AdminCreateRequest):
 @app.get("/auth/users")
 def get_auth_users():
     return {"users": list_users()}
+
+
+@app.post("/auth/login")
+def login(request: LoginRequest):
+    user = get_user_by_email(request.email)
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    if not user.get("is_active"):
+        raise HTTPException(
+            status_code=403,
+            detail="User account is inactive",
+        )
+
+    password_matches = verify_password(
+        password=request.password,
+        stored_password_hash=user["password_hash"],
+    )
+
+    if not password_matches:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    return {
+        "login_success": True,
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "role": user["role"],
+            "is_active": user["is_active"],
+        },
+    }
 
 
 @app.get("/dashboard")
