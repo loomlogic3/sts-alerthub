@@ -89,6 +89,12 @@
       margin-bottom: 8px;
     }
 
+    .user-line {
+      color: #93c5fd;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
     .dot {
       display: inline-block;
       width: 9px;
@@ -324,6 +330,7 @@
         <div class="brand-pill">SynthThinkingSystems • Monitoring</div>
         <h1>STS AlertHub</h1>
         <div class="subtitle">Real-time website monitoring, incidents, uptime and response performance.</div>
+        <div class="user-line">Logged in as: <span id="logged_in_user">-</span></div>
         <button class="secondary-button" onclick="logout()" style="margin-top: 14px;">Logout</button>
       </div>
 
@@ -579,6 +586,9 @@
 
       document.getElementById('last_updated').textContent =
         new Date().toLocaleString();
+
+      document.getElementById('logged_in_user').textContent =
+        localStorage.getItem('alerthub_user_email') || 'Unknown user';
     }
 
     requireLogin();
