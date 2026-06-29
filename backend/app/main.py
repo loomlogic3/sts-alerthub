@@ -270,6 +270,11 @@ def login_page():
     return FileResponse("backend/app/templates/login.html")
 
 
+@app.get("/change-password")
+def change_password_page():
+    return FileResponse("backend/app/templates/change_password.html")
+
+
 @app.post("/auth/create-admin")
 def create_admin_user(request: AdminCreateRequest):
     existing_user = get_user_by_email(request.email)
