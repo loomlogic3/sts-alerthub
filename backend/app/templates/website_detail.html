@@ -108,6 +108,18 @@
 
     button:hover { filter: brightness(1.1); }
 
+    .user-line {
+      color: #93c5fd;
+      margin: 8px 0 14px;
+      font-size: 13px;
+    }
+
+    .secondary-button {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      box-shadow: none;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -203,6 +215,8 @@
 <body>
   <div class="shell">
     <a href="/dashboard" class="back">← Back to dashboard</a>
+    <div class="user-line">Logged in as: <span id="logged_in_user">-</span></div>
+    <button class="secondary-button" onclick="logout()" style="margin-bottom: 22px;">Logout</button>
 
     <h1 id="website_name">Website Detail</h1>
     <div id="website_url" class="subtitle"></div>
@@ -375,6 +389,12 @@
       }).join('');
     }
 
+    function logout() {
+      localStorage.removeItem('alerthub_logged_in');
+      localStorage.removeItem('alerthub_user_email');
+      window.location.href = '/login';
+    }
+
     async function checkNow() {
       await fetch('/monitors/run-all', { method: 'POST' });
       await loadDetail();
@@ -429,6 +449,9 @@
 
       document.getElementById('incidents').innerHTML =
         renderIncidents(incidentsData.incidents);
+
+      document.getElementById('logged_in_user').textContent =
+        localStorage.getItem('alerthub_user_email') || 'Unknown user';
     }
 
     requireLogin();
