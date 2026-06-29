@@ -255,6 +255,15 @@
   </div>
 
   <script>
+
+    function requireLogin() {
+      const isLoggedIn = localStorage.getItem('alerthub_logged_in');
+
+      if (isLoggedIn !== 'true') {
+        window.location.href = '/login';
+      }
+    }
+
     const pathParts = window.location.pathname.split('/');
     const websiteId = pathParts[2];
 
@@ -422,6 +431,7 @@
         renderIncidents(incidentsData.incidents);
     }
 
+    requireLogin();
     loadDetail();
     setInterval(loadDetail, 30000);
   </script>
