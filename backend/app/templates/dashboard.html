@@ -324,6 +324,7 @@
         <div class="brand-pill">SynthThinkingSystems • Monitoring</div>
         <h1>STS AlertHub</h1>
         <div class="subtitle">Real-time website monitoring, incidents, uptime and response performance.</div>
+        <button class="secondary-button" onclick="logout()" style="margin-top: 14px;">Logout</button>
       </div>
 
       <div class="refresh-box">
@@ -390,6 +391,21 @@
   </div>
 
   <script>
+
+
+    function requireLogin() {
+      const isLoggedIn = localStorage.getItem('alerthub_logged_in');
+
+      if (isLoggedIn !== 'true') {
+        window.location.href = '/login';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('alerthub_logged_in');
+      localStorage.removeItem('alerthub_user_email');
+      window.location.href = '/login';
+    }
 
     function cleanReason(reason) {
       const text = String(reason || 'Website unreachable');
@@ -565,6 +581,7 @@
         new Date().toLocaleString();
     }
 
+    requireLogin();
     loadDashboard();
     setInterval(loadDashboard, 30000);
   </script>

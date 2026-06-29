@@ -131,6 +131,9 @@
         return;
       }
 
+      localStorage.setItem('alerthub_logged_in', 'true');
+      localStorage.setItem('alerthub_user_email', data.user.email);
+
       message.style.color = '#86efac';
       message.textContent = 'Login successful. Redirecting...';
 
