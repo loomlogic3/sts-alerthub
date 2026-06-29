@@ -9,7 +9,7 @@ from pydantic import BaseModel, field_validator
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
-from backend.app.services.user_service import create_user, get_user_by_email, list_users
+from backend.app.services.user_service import create_user, get_user_by_email, list_users, update_user_password
 from backend.app.services.incident_service import (
     get_incident_summary,
     list_incidents,
@@ -59,6 +59,12 @@ class AdminCreateRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class PasswordChangeRequest(BaseModel):
+    email: str
+    current_password: str
+    new_password: str
 
 
 class WebsiteCreateRequest(BaseModel):
@@ -328,6 +334,39 @@ def login(request: LoginRequest):
             "role": user["role"],
             "is_active": user["is_active"],
         },
+    }
+
+
+@app.post("/auth/change-password")
+def change_password(request: PasswordChangeRequest):
+    user = get_user_by_email(request.email)
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    password_matches = verify_password(
+        password=request.current_password,
+        stored_password_hash=user["password_hash"],
+    )
+
+    if not password_matches:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    new_password_hash = hash_password(request.new_password)
+    updated = update_user_password(
+        email=request.email,
+        password_hash=new_password_hash,
+    )
+
+    return {
+        "password_changed": updated,
+        "email": request.email,
     }
 
 

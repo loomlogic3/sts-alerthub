@@ -82,3 +82,23 @@ def list_users() -> list[dict]:
         ).fetchall()
 
     return [dict(row) for row in rows]
+
+
+def update_user_password(
+    email: str,
+    password_hash: str,
+) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE users
+            SET password_hash = ?
+            WHERE email = ?
+            """,
+            (
+                password_hash,
+                email,
+            ),
+        )
+
+    return cursor.rowcount > 0
