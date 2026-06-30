@@ -402,6 +402,18 @@
   <script>
 
 
+    function getPermissions() {
+      try {
+        return JSON.parse(localStorage.getItem('alerthub_permissions') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function hasPermission(permission) {
+      return getPermissions().includes(permission);
+    }
+
     function requireLogin() {
       const isLoggedIn = localStorage.getItem('alerthub_logged_in');
 
@@ -496,7 +508,7 @@
             <td>${avgResponse}</td>
             <td class="muted">${website.last_checked_at || 'Never'}</td>
             <td>
-              <button onclick="checkNow()">Check Now</button>
+              ${hasPermission('monitors:run') ? '<button onclick="checkNow()">Check Now</button>' : ''}
               <button class="secondary-button" onclick="viewWebsite(${website.id})">View</button>
             </td>
           </tr>
