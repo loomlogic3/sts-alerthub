@@ -9,6 +9,7 @@ from pydantic import BaseModel, field_validator
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
+from backend.app.services.rbac_service import get_role_permissions
 from backend.app.services.user_service import create_user, get_user_by_email, list_users, update_user_password
 from backend.app.services.incident_service import (
     get_incident_summary,
@@ -337,6 +338,7 @@ def login(request: LoginRequest):
             "id": user["id"],
             "email": user["email"],
             "role": user["role"],
+            "permissions": get_role_permissions(user["role"]),
             "is_active": user["is_active"],
         },
     }
