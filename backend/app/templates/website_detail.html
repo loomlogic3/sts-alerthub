@@ -244,7 +244,7 @@
     </div>
 
     <div class="card">
-      <button onclick="checkNow()">Check Now</button>
+      <button id="check_now_button" onclick="checkNow()">Check Now</button>
     </div>
 
     <div class="table-card">
@@ -269,6 +269,18 @@
   </div>
 
   <script>
+
+    function getPermissions() {
+      try {
+        return JSON.parse(localStorage.getItem('alerthub_permissions') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function hasPermission(permission) {
+      return getPermissions().includes(permission);
+    }
 
     function requireLogin() {
       const isLoggedIn = localStorage.getItem('alerthub_logged_in');
@@ -452,6 +464,11 @@
 
       document.getElementById('logged_in_user').textContent =
         localStorage.getItem('alerthub_user_email') || 'Unknown user';
+
+      const checkNowButton = document.getElementById('check_now_button');
+      if (checkNowButton && !hasPermission('monitors:run')) {
+        checkNowButton.style.display = 'none';
+      }
     }
 
     requireLogin();
