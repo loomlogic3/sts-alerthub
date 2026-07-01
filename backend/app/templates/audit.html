@@ -107,6 +107,17 @@
         <option value="success">Success only</option>
         <option value="failed">Failed only</option>
       </select>
+
+      <select id="action_filter" onchange="loadAuditLogs()">
+        <option value="all">All actions</option>
+        <option value="LOGIN">LOGIN</option>
+        <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+        <option value="PASSWORD_CHANGED">PASSWORD_CHANGED</option>
+        <option value="WEBSITE_CREATED">WEBSITE_CREATED</option>
+        <option value="WEBSITE_UPDATED">WEBSITE_UPDATED</option>
+        <option value="WEBSITE_DELETED">WEBSITE_DELETED</option>
+        <option value="MONITOR_RUN">MONITOR_RUN</option>
+      </select>
     </div>
 
     <div class="card">
@@ -146,9 +157,19 @@
       const data = await response.json();
 
       const selectedResult = document.getElementById('result_filter').value;
+      const selectedAction = document.getElementById('action_filter').value;
 
       const filteredLogs = data.audit_logs.filter((item) => {
-        return selectedResult === 'all' || item.result === selectedResult;
+
+        const resultMatches =
+          selectedResult === 'all' ||
+          item.result === selectedResult;
+
+        const actionMatches =
+          selectedAction === 'all' ||
+          item.action === selectedAction;
+
+        return resultMatches && actionMatches;
       });
 
       if (!filteredLogs.length) {
