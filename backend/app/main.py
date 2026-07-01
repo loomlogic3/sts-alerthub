@@ -384,6 +384,15 @@ def change_password(request: PasswordChangeRequest):
         password_hash=new_password_hash,
     )
 
+    record_audit(
+        user_email=request.email,
+        action="PASSWORD_CHANGED",
+        object_type="user",
+        object_name=request.email,
+        details="User changed password",
+        result="success" if updated else "failed",
+    )
+
     return {
         "password_changed": updated,
         "email": request.email,
