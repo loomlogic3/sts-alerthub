@@ -6,11 +6,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
+from backend.app.services.audit_service import initialize_audit_table, record_audit
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
 from backend.app.services.rbac_service import get_role_permissions
 from backend.app.services.user_service import create_user, get_user_by_email, list_users, update_user_password
+from backend.app.services.audit_service import initialize_audit_table
 from backend.app.services.incident_service import (
     get_incident_summary,
     list_incidents,
@@ -36,7 +38,9 @@ from backend.app.services.website_registry import (
 )
 
 load_dotenv()
+
 initialize_database()
+initialize_audit_table()
 
 VALID_PAYMENT_STATUSES = {"trial", "paid", "overdue", "cancelled"}
 
@@ -331,6 +335,15 @@ def login(request: LoginRequest):
             status_code=401,
             detail="Invalid email or password",
         )
+
+    record_audit(
+        user_email=user["email"],
+        action="LOGIN",
+        object_type="user",
+        object_name=user["email"],
+        details="User logged in successfully",
+        result="success",
+    )
 
     return {
         "login_success": True,
