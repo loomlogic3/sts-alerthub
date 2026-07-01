@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
-from backend.app.services.audit_service import initialize_audit_table, record_audit
+from backend.app.services.audit_service import initialize_audit_table, record_audit, list_audit_logs
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
@@ -397,6 +397,17 @@ def change_password(request: PasswordChangeRequest):
         "password_changed": updated,
         "email": request.email,
     }
+
+
+
+@app.get("/audit")
+def audit_page():
+    return FileResponse("backend/app/templates/audit.html")
+
+
+@app.get("/audit/logs")
+def get_audit_logs():
+    return {"audit_logs": list_audit_logs()}
 
 
 @app.get("/dashboard")

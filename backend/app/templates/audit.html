@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audit Log - STS AlertHub</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 32px;
+    }
+
+    .shell {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    a {
+      color: #93c5fd;
+      text-decoration: none;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      padding: 20px;
+      margin-top: 18px;
+      overflow-x: auto;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 950px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th {
+      color: #94a3b8;
+      font-weight: normal;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .success {
+      background: rgba(20, 83, 45, 0.75);
+      color: #bbf7d0;
+    }
+
+    .failed {
+      background: rgba(127, 29, 29, 0.75);
+      color: #fecaca;
+    }
+
+    .muted {
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a href="/dashboard">← Back to dashboard</a>
+
+    <h1>Audit Log</h1>
+    <p class="subtitle">Trace important user and system actions.</p>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Object</th>
+            <th>Result</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="audit_table">
+          <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function requireLogin() {
+      if (localStorage.getItem('alerthub_logged_in') !== 'true') {
+        window.location.href = '/login';
+      }
+    }
+
+    function resultBadge(result) {
+      const clean = result || 'unknown';
+      const cls = clean === 'success' ? 'success' : 'failed';
+      return `<span class="badge ${cls}">${clean.toUpperCase()}</span>`;
+    }
+
+    async function loadAuditLogs() {
+      const response = await fetch('/audit/logs');
+      const data = await response.json();
+
+      if (!data.audit_logs.length) {
+        document.getElementById('audit_table').innerHTML =
+          '<tr><td colspan="6">No audit events yet.</td></tr>';
+        return;
+      }
+
+      document.getElementById('audit_table').innerHTML =
+        data.audit_logs.map((item) => `
+          <tr>
+            <td class="muted">${item.timestamp}</td>
+            <td>${item.user_email || 'system'}</td>
+            <td><strong>${item.action}</strong></td>
+            <td>${item.object_type || '-'}: ${item.object_name || '-'}</td>
+            <td>${resultBadge(item.result)}</td>
+            <td>${item.details || '-'}</td>
+          </tr>
+        `).join('');
+    }
+
+    requireLogin();
+    loadAuditLogs();
+    setInterval(loadAuditLogs, 30000);
+  </script>
+</body>
+</html>
