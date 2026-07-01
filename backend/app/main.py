@@ -507,7 +507,18 @@ def check_website_endpoint(request: WebsiteCheckRequest):
 
 @app.post("/monitors/run-all")
 def run_all_monitors():
-    return run_monitor_job()
+    result = run_monitor_job()
+
+    record_audit(
+        user_email="system/manual",
+        action="MONITOR_RUN",
+        object_type="monitor",
+        object_name="all",
+        details=f"Manual monitor run completed: {result}",
+        result="success",
+    )
+
+    return result
 
 
 @app.post("/websites")
