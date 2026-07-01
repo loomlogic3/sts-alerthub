@@ -314,6 +314,15 @@ def login(request: LoginRequest):
     user = get_user_by_email(request.email)
 
     if not user:
+        record_audit(
+            user_email=request.email,
+            action="LOGIN_FAILED",
+            object_type="user",
+            object_name=request.email,
+            details="Login failed because user was not found",
+            result="failed",
+        )
+
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password",
@@ -331,6 +340,15 @@ def login(request: LoginRequest):
     )
 
     if not password_matches:
+        record_audit(
+            user_email=request.email,
+            action="LOGIN_FAILED",
+            object_type="user",
+            object_name=request.email,
+            details="Login failed because password did not match",
+            result="failed",
+        )
+
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password",
