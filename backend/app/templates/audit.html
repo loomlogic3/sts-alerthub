@@ -77,6 +77,21 @@
     .muted {
       color: #94a3b8;
     }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    select {
+      background: #020617;
+      color: #e5e7eb;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 10px;
+      padding: 10px;
+    }
   </style>
 </head>
 <body>
@@ -85,6 +100,14 @@
 
     <h1>Audit Log</h1>
     <p class="subtitle">Trace important user and system actions.</p>
+
+    <div class="filters">
+      <select id="result_filter" onchange="loadAuditLogs()">
+        <option value="all">All results</option>
+        <option value="success">Success only</option>
+        <option value="failed">Failed only</option>
+      </select>
+    </div>
 
     <div class="card">
       <table>
@@ -122,14 +145,20 @@
       const response = await fetch('/audit/logs');
       const data = await response.json();
 
-      if (!data.audit_logs.length) {
+      const selectedResult = document.getElementById('result_filter').value;
+
+      const filteredLogs = data.audit_logs.filter((item) => {
+        return selectedResult === 'all' || item.result === selectedResult;
+      });
+
+      if (!filteredLogs.length) {
         document.getElementById('audit_table').innerHTML =
           '<tr><td colspan="6">No audit events yet.</td></tr>';
         return;
       }
 
       document.getElementById('audit_table').innerHTML =
-        data.audit_logs.map((item) => `
+        filteredLogs.map((item) => `
           <tr>
             <td class="muted">${item.timestamp}</td>
             <td>${item.user_email || 'system'}</td>
