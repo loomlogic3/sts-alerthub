@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Websites - STS AlertHub</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 32px;
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    a {
+      color: #93c5fd;
+      text-decoration: none;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: #020617;
+      color: #e5e7eb;
+      margin-bottom: 12px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 6px;
+    }
+
+    .danger {
+      background: #991b1b;
+    }
+
+    .secondary {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 14px;
+    }
+
+    th {
+      color: #94a3b8;
+      font-weight: normal;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+    }
+
+    .message {
+      margin-top: 12px;
+      color: #86efac;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a href="/dashboard">← Back to dashboard</a>
+
+    <h1>Manage Websites</h1>
+    <p style="color:#94a3b8;">Add, edit, delete and inspect monitored websites.</p>
+
+    <div class="card">
+      <h2>Add / Edit Website</h2>
+
+      <input id="website_id" type="hidden">
+
+      <div class="grid">
+        <div>
+          <label>Name</label>
+          <input id="name" placeholder="Website name">
+        </div>
+
+        <div>
+          <label>URL</label>
+          <input id="url" placeholder="https://example.com">
+        </div>
+
+        <div>
+          <label>Location</label>
+          <input id="location" placeholder="Lagos, Nigeria">
+        </div>
+
+        <div>
+          <label>Use Case</label>
+          <input id="real_world_usecase" placeholder="Business website">
+        </div>
+
+        <div>
+          <label>Payment Status</label>
+          <select id="payment_status">
+            <option value="trial">trial</option>
+            <option value="paid">paid</option>
+            <option value="overdue">overdue</option>
+            <option value="cancelled">cancelled</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Active</label>
+          <select id="is_active">
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        </div>
+      </div>
+
+      <button onclick="saveWebsite()">Save Website</button>
+      <button class="secondary" onclick="resetForm()">Clear</button>
+
+      <div id="message" class="message"></div>
+    </div>
+
+    <div class="card">
+      <h2>Websites</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>URL</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="websites_table">
+          <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function requireLogin() {
+      if (localStorage.getItem('alerthub_logged_in') !== 'true') {
+        window.location.href = '/login';
+      }
+    }
+
+    function getPermissions() {
+      try {
+        return JSON.parse(localStorage.getItem('alerthub_permissions') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function hasPermission(permission) {
+      return getPermissions().includes(permission);
+    }
+
+    function resetForm() {
+      document.getElementById('website_id').value = '';
+      document.getElementById('name').value = '';
+      document.getElementById('url').value = '';
+      document.getElementById('location').value = '';
+      document.getElementById('real_world_usecase').value = '';
+      document.getElementById('payment_status').value = 'trial';
+      document.getElementById('is_active').value = 'true';
+    }
+
+    function showMessage(text, ok = true) {
+      const message = document.getElementById('message');
+      message.style.color = ok ? '#86efac' : '#fca5a5';
+      message.textContent = text;
+    }
+
+    async function loadWebsites() {
+      const response = await fetch('/websites');
+      const data = await response.json();
+
+      if (!data.websites.length) {
+        document.getElementById('websites_table').innerHTML =
+          '<tr><td colspan="6">No websites yet.</td></tr>';
+        return;
+      }
+
+      document.getElementById('websites_table').innerHTML =
+        data.websites.map((website) => `
+          <tr>
+            <td><strong>${website.name}</strong></td>
+            <td><a href="${website.url}" target="_blank">${website.url}</a></td>
+            <td>${website.last_status || 'unknown'}</td>
+            <td>${website.payment_status}</td>
+            <td>${website.is_active ? 'Yes' : 'No'}</td>
+            <td>
+              <button class="secondary" onclick="window.location.href='/websites/${website.id}/detail'">View</button>
+              <button onclick='editWebsite(${JSON.stringify(website)})'>Edit</button>
+              <button class="danger" onclick="deleteWebsite(${website.id})">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    function editWebsite(website) {
+      document.getElementById('website_id').value = website.id;
+      document.getElementById('name').value = website.name || '';
+      document.getElementById('url').value = website.url || '';
+      document.getElementById('location').value = website.location || '';
+      document.getElementById('real_world_usecase').value = website.real_world_usecase || '';
+      document.getElementById('payment_status').value = website.payment_status || 'trial';
+      document.getElementById('is_active').value = website.is_active ? 'true' : 'false';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function saveWebsite() {
+      if (!hasPermission('websites:manage')) {
+        showMessage('You do not have permission to manage websites.', false);
+        return;
+      }
+
+      const websiteId = document.getElementById('website_id').value;
+
+      const payload = {
+        name: document.getElementById('name').value,
+        url: document.getElementById('url').value,
+        location: document.getElementById('location').value,
+        real_world_usecase: document.getElementById('real_world_usecase').value,
+        payment_status: document.getElementById('payment_status').value,
+        is_active: document.getElementById('is_active').value === 'true'
+      };
+
+      const response = await fetch(
+        websiteId ? `/websites/${websiteId}` : '/websites',
+        {
+          method: websiteId ? 'PATCH' : 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (!response.ok) {
+        showMessage('Save failed.', false);
+        return;
+      }
+
+      showMessage(websiteId ? 'Website updated.' : 'Website created.');
+      resetForm();
+      await loadWebsites();
+    }
+
+    async function deleteWebsite(websiteId) {
+      if (!hasPermission('websites:manage')) {
+        showMessage('You do not have permission to delete websites.', false);
+        return;
+      }
+
+      if (!confirm('Delete this website?')) {
+        return;
+      }
+
+      const response = await fetch(`/websites/${websiteId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        showMessage('Delete failed.', false);
+        return;
+      }
+
+      showMessage('Website deleted.');
+      await loadWebsites();
+    }
+
+    requireLogin();
+    loadWebsites();
+  </script>
+</body>
+</html>

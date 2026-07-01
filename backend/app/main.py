@@ -382,6 +382,11 @@ def dashboard_page():
     return FileResponse("backend/app/templates/dashboard.html")
 
 
+@app.get("/websites/manage")
+def websites_manage_page():
+    return FileResponse("backend/app/templates/websites_manage.html")
+
+
 @app.get("/websites/{website_id}/detail")
 def website_detail_page(website_id: int):
     return FileResponse("backend/app/templates/website_detail.html")
