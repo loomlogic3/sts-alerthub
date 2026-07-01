@@ -509,6 +509,15 @@ def add_website(request: WebsiteCreateRequest):
         payment_status=request.payment_status,
     )
 
+    record_audit(
+        user_email=None,
+        action="WEBSITE_CREATED",
+        object_type="website",
+        object_name=website.get("name"),
+        details=f"Created website {website.get('url')}",
+        result="success",
+    )
+
     return {"website_created": True, "website": website}
 
 
@@ -599,6 +608,15 @@ def patch_website(website_id: int, request: WebsiteUpdateRequest):
         request.model_dump(exclude_none=True),
     )
 
+    record_audit(
+        user_email=None,
+        action="WEBSITE_UPDATED",
+        object_type="website",
+        object_name=str(website_id),
+        details="Updated website record",
+        result="success" if updated else "failed",
+    )
+
     return {
         "website_updated": updated,
         "website_id": website_id,
@@ -608,6 +626,15 @@ def patch_website(website_id: int, request: WebsiteUpdateRequest):
 @app.delete("/websites/{website_id}")
 def remove_website(website_id: int):
     deleted = delete_website(website_id)
+
+    record_audit(
+        user_email=None,
+        action="WEBSITE_DELETED",
+        object_type="website",
+        object_name=str(website_id),
+        details="Deleted website record",
+        result="success" if deleted else "failed",
+    )
 
     return {
         "website_deleted": deleted,
