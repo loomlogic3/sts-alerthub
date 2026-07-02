@@ -61,6 +61,13 @@ class AdminCreateRequest(BaseModel):
     password: str
 
 
+
+class UserCreateRequest(BaseModel):
+    email: str
+    password: str
+    role: str = "viewer"
+
+
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -303,6 +310,38 @@ def create_admin_user(request: AdminCreateRequest):
         "user": user,
     }
 
+
+
+
+@app.post("/users")
+def create_app_user(request: UserCreateRequest):
+    if request.role not in {"admin", "operator", "viewer"}:
+        raise HTTPException(
+            status_code=400,
+            detail="role must be one of: admin, operator, viewer",
+        )
+
+    password_hash = hash_password(request.password)
+
+    user = create_user(
+        email=request.email,
+        password_hash=password_hash,
+        role=request.role,
+    )
+
+    record_audit(
+        user_email="admin",
+        action="USER_CREATED",
+        object_type="user",
+        object_name=request.email,
+        details=f"Created user with role {request.role}",
+        result="success",
+    )
+
+    return {
+        "user_created": True,
+        "user": user,
+    }
 
 
 @app.get("/users/list")

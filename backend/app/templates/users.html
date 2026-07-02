@@ -25,6 +25,39 @@
             margin-bottom:30px;
         }
 
+        .card{
+            background:#111827;
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:14px;
+            padding:20px;
+            margin-bottom:24px;
+        }
+
+        input,select{
+            width:100%;
+            padding:12px;
+            border-radius:10px;
+            border:1px solid rgba(148,163,184,.25);
+            background:#020617;
+            color:#e5e7eb;
+            margin-bottom:14px;
+        }
+
+        button{
+            background:linear-gradient(135deg,#2563eb,#7c3aed);
+            color:white;
+            border:none;
+            border-radius:10px;
+            padding:10px 14px;
+            font-weight:bold;
+            cursor:pointer;
+        }
+
+        .message{
+            margin-top:12px;
+            color:#86efac;
+        }
+
         table{
             width:100%;
             border-collapse:collapse;
@@ -65,6 +98,27 @@
 Registered AlertHub users
 </p>
 
+<div class="card">
+<h2>Create User</h2>
+
+<label>Email</label>
+<input id="email" type="email" placeholder="newuser@sts.local">
+
+<label>Role</label>
+<select id="role">
+<option value="viewer">viewer</option>
+<option value="operator">operator</option>
+<option value="admin">admin</option>
+</select>
+
+<label>Password</label>
+<input id="password" type="password" placeholder="Temporary password">
+
+<button onclick="createUser()">Create User</button>
+
+<div id="message" class="message"></div>
+</div>
+
 <table>
 
 <thead>
@@ -100,6 +154,40 @@ Loading...
 </div>
 
 <script>
+
+async function createUser(){
+
+const message=document.getElementById("message");
+message.style.color="#86efac";
+message.textContent="Creating user...";
+
+const response=await fetch("/users",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+email:document.getElementById("email").value,
+password:document.getElementById("password").value,
+role:document.getElementById("role").value
+})
+});
+
+const data=await response.json();
+
+if(!response.ok){
+message.style.color="#fca5a5";
+message.textContent=data.detail || "User creation failed";
+return;
+}
+
+message.textContent="User created.";
+
+document.getElementById("email").value="";
+document.getElementById("password").value="";
+document.getElementById("role").value="viewer";
+
+await loadUsers();
+
+}
 
 async function loadUsers(){
 
