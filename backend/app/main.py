@@ -11,7 +11,7 @@ from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
 from backend.app.services.rbac_service import get_role_permissions
-from backend.app.services.user_service import create_user, get_user_by_email, list_users, update_user_password
+from backend.app.services.user_service import create_user, get_user_by_email, list_users, update_user, update_user_password
 from backend.app.services.audit_service import initialize_audit_table
 from backend.app.services.incident_service import (
     get_incident_summary,
@@ -60,6 +60,12 @@ class AdminCreateRequest(BaseModel):
     email: str
     password: str
 
+
+
+
+class UserUpdateRequest(BaseModel):
+    role: str
+    is_active: bool
 
 
 class UserCreateRequest(BaseModel):
@@ -341,6 +347,36 @@ def create_app_user(request: UserCreateRequest):
     return {
         "user_created": True,
         "user": user,
+    }
+
+
+
+@app.patch("/users/{email}")
+def update_app_user(email: str, request: UserUpdateRequest):
+    if request.role not in {"admin", "operator", "viewer"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid role",
+        )
+
+    updated = update_user(
+        email=email,
+        role=request.role,
+        is_active=request.is_active,
+    )
+
+    record_audit(
+        user_email="admin",
+        action="USER_UPDATED",
+        object_type="user",
+        object_name=email,
+        details=f"Role={request.role}, Active={request.is_active}",
+        result="success" if updated else "failed",
+    )
+
+    return {
+        "user_updated": updated,
+        "email": email,
     }
 
 
