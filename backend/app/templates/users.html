@@ -139,6 +139,8 @@ Registered AlertHub users
 
 <th>Active</th>
 
+<th>Actions</th>
+
 </tr>
 
 </thead>
@@ -147,7 +149,7 @@ Registered AlertHub users
 
 <tr>
 
-<td colspan="3">
+<td colspan="4">
 
 Loading...
 
@@ -162,6 +164,10 @@ Loading...
 </div>
 
 <script>
+
+function editUser(email, role, isActive){
+alert(`Edit coming next for ${email}`);
+}
 
 async function createUser(){
 
@@ -212,6 +218,10 @@ document.getElementById("users_table").innerHTML=data.users.map(user=>`
 <td>${user.role}</td>
 
 <td>${user.is_active?"Yes":"No"}</td>
+
+<td>
+<button onclick="editUser('${user.email}', '${user.role}', ${user.is_active})">Edit</button>
+</td>
 
 </tr>
 
