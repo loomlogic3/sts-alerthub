@@ -304,6 +304,12 @@ def create_admin_user(request: AdminCreateRequest):
     }
 
 
+
+@app.get("/users/list")
+def users_list():
+    return {"users": list_users()}
+
+
 @app.get("/auth/users")
 def get_auth_users():
     return {"users": list_users()}
@@ -416,6 +422,12 @@ def change_password(request: PasswordChangeRequest):
         "email": request.email,
     }
 
+
+
+
+@app.get("/users")
+def users_page():
+    return FileResponse("backend/app/templates/users.html")
 
 
 @app.get("/audit")

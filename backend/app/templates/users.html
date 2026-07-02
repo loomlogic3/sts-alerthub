@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Users - STS AlertHub</title>
+
+    <style>
+        body{
+            background:#020617;
+            color:#e5e7eb;
+            font-family:Arial,sans-serif;
+            margin:0;
+        }
+
+        .container{
+            width:1100px;
+            margin:40px auto;
+        }
+
+        h1{
+            margin-bottom:10px;
+        }
+
+        .subtitle{
+            color:#94a3b8;
+            margin-bottom:30px;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            background:#111827;
+            border-radius:14px;
+            overflow:hidden;
+        }
+
+        th,td{
+            padding:16px;
+            border-bottom:1px solid rgba(255,255,255,.08);
+            text-align:left;
+        }
+
+        th{
+            color:#94a3b8;
+            font-size:13px;
+            text-transform:uppercase;
+        }
+
+        a{
+            color:#93c5fd;
+            text-decoration:none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<a href="/dashboard">← Back to dashboard</a>
+
+<h1>User Management</h1>
+
+<p class="subtitle">
+Registered AlertHub users
+</p>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Email</th>
+
+<th>Role</th>
+
+<th>Active</th>
+
+</tr>
+
+</thead>
+
+<tbody id="users_table">
+
+<tr>
+
+<td colspan="3">
+
+Loading...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<script>
+
+async function loadUsers(){
+
+const response=await fetch("/users/list");
+
+const data=await response.json();
+
+document.getElementById("users_table").innerHTML=data.users.map(user=>`
+
+<tr>
+
+<td>${user.email}</td>
+
+<td>${user.role}</td>
+
+<td>${user.is_active?"Yes":"No"}</td>
+
+</tr>
+
+`).join("");
+
+}
+
+loadUsers();
+
+</script>
+
+</body>
+
+</html>
