@@ -102,3 +102,25 @@ def update_user_password(
         )
 
     return cursor.rowcount > 0
+
+
+def update_user(
+    email: str,
+    role: str,
+    is_active: bool,
+) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE users
+            SET role = ?, is_active = ?
+            WHERE email = ?
+            """,
+            (
+                role,
+                1 if is_active else 0,
+                email,
+            ),
+        )
+
+    return cursor.rowcount > 0
