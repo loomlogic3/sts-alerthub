@@ -33,6 +33,10 @@
             margin-bottom:24px;
         }
 
+        .form-panel{
+            max-width:640px;
+        }
+
         input,select{
             width:100%;
             padding:12px;
@@ -101,6 +105,8 @@ Registered AlertHub users
 <div class="card">
 <h2>Create User</h2>
 
+<div class="form-panel">
+
 <label>Email</label>
 <input id="email" type="email" placeholder="newuser@sts.local">
 
@@ -117,6 +123,8 @@ Registered AlertHub users
 <button onclick="createUser()">Create User</button>
 
 <div id="message" class="message"></div>
+
+</div>
 </div>
 
 <table>
