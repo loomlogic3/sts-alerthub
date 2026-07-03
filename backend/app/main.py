@@ -63,6 +63,11 @@ class AdminCreateRequest(BaseModel):
 
 
 
+
+class UserResetPasswordRequest(BaseModel):
+    new_password: str
+
+
 class UserUpdateRequest(BaseModel):
     role: str
     is_active: bool
@@ -349,6 +354,38 @@ def create_app_user(request: UserCreateRequest):
         "user": user,
     }
 
+
+
+
+@app.post("/users/{email}/reset-password")
+def reset_user_password(email: str, request: UserResetPasswordRequest):
+    user = get_user_by_email(email)
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    password_hash = hash_password(request.new_password)
+    updated = update_user_password(
+        email=email,
+        password_hash=password_hash,
+    )
+
+    record_audit(
+        user_email="admin",
+        action="USER_PASSWORD_RESET",
+        object_type="user",
+        object_name=email,
+        details="Administrator reset user password",
+        result="success" if updated else "failed",
+    )
+
+    return {
+        "password_reset": updated,
+        "email": email,
+    }
 
 
 @app.patch("/users/{email}")
