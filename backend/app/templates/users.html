@@ -216,6 +216,33 @@ document.getElementById("edit_mode").value="true";
 window.scrollTo({top:0,behavior:"smooth"});
 }
 
+async function resetUserPassword(email){
+
+const newPassword=prompt(`Enter temporary password for ${email}`);
+
+if(!newPassword){
+return;
+}
+
+const response=await fetch(`/users/${email}/reset-password`,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+new_password:newPassword
+})
+});
+
+const data=await response.json();
+
+if(!response.ok || !data.password_reset){
+alert(data.detail || "Password reset failed");
+return;
+}
+
+alert(`Password reset for ${email}.`);
+
+}
+
 async function toggleUserActive(email, role, isActive){
 
 const nextActive=!Boolean(isActive);
@@ -343,6 +370,7 @@ document.getElementById("users_table").innerHTML=data.users.map(user=>`
 <button onclick="toggleUserActive('${user.email}', '${user.role}', ${user.is_active})" style="background:#334155;">
 ${user.is_active ? "Deactivate" : "Activate"}
 </button>
+<button onclick="resetUserPassword('${user.email}')" style="background:#7c2d12;">Reset Password</button>
 </td>
 
 </tr>
