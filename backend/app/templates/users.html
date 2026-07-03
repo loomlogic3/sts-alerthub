@@ -216,6 +216,34 @@ document.getElementById("edit_mode").value="true";
 window.scrollTo({top:0,behavior:"smooth"});
 }
 
+async function toggleUserActive(email, role, isActive){
+
+const nextActive=!Boolean(isActive);
+
+if(!confirm(`${nextActive ? "Activate" : "Deactivate"} ${email}?`)){
+return;
+}
+
+const response=await fetch(`/users/${email}`,{
+method:"PATCH",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+role:role,
+is_active:nextActive
+})
+});
+
+const data=await response.json();
+
+if(!response.ok || !data.user_updated){
+alert(data.detail || "User status update failed");
+return;
+}
+
+await loadUsers();
+
+}
+
 async function saveUser(){
 
 const isEditMode=document.getElementById("edit_mode").value==="true";
@@ -312,6 +340,9 @@ document.getElementById("users_table").innerHTML=data.users.map(user=>`
 
 <td>
 <button onclick="editUser('${user.email}', '${user.role}', ${user.is_active})">Edit</button>
+<button onclick="toggleUserActive('${user.email}', '${user.role}', ${user.is_active})" style="background:#334155;">
+${user.is_active ? "Deactivate" : "Activate"}
+</button>
 </td>
 
 </tr>
