@@ -149,7 +149,17 @@ Registered AlertHub users
 </div>
 </div>
 
-<table>
+<div style="margin:20px 0;">
+<input
+id="userSearch"
+type="text"
+placeholder="Search users..."
+onkeyup="filterUsers()"
+style="width:320px;"
+>
+</div>
+
+<table id="usersTable">
 
 <thead>
 
@@ -377,6 +387,15 @@ ${user.is_active ? "Deactivate" : "Activate"}
 
 `).join("");
 
+}
+
+function filterUsers(){
+const filter=document.getElementById("userSearch").value.toLowerCase();
+
+document.querySelectorAll("#usersTable tbody tr").forEach(row=>{
+const text=row.innerText.toLowerCase();
+row.style.display=text.includes(filter) ? "" : "none";
+});
 }
 
 loadUsers();
