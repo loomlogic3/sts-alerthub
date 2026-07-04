@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
@@ -11,6 +11,7 @@ from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
 from backend.app.services.rbac_service import get_role_permissions
+from backend.app.services.security_service import require_admin
 from backend.app.services.user_service import create_user, get_user_by_email, list_users, update_user, update_user_password
 from backend.app.services.audit_service import initialize_audit_table
 from backend.app.services.incident_service import (
@@ -325,7 +326,11 @@ def create_admin_user(request: AdminCreateRequest):
 
 
 @app.post("/users")
-def create_app_user(request: UserCreateRequest):
+def create_app_user(
+    request: UserCreateRequest,
+    x_user_role: str = Header(default=""),
+):
+    require_admin(x_user_role)
     if request.role not in {"admin", "operator", "viewer"}:
         raise HTTPException(
             status_code=400,
