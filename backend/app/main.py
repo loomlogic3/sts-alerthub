@@ -363,7 +363,12 @@ def create_app_user(
 
 
 @app.post("/users/{email}/reset-password")
-def reset_user_password(email: str, request: UserResetPasswordRequest):
+def reset_user_password(
+    email: str,
+    request: UserResetPasswordRequest,
+    x_user_role: str = Header(default=""),
+):
+    require_admin(x_user_role)
     user = get_user_by_email(email)
 
     if not user:
@@ -394,7 +399,12 @@ def reset_user_password(email: str, request: UserResetPasswordRequest):
 
 
 @app.patch("/users/{email}")
-def update_app_user(email: str, request: UserUpdateRequest):
+def update_app_user(
+    email: str,
+    request: UserUpdateRequest,
+    x_user_role: str = Header(default=""),
+):
+    require_admin(x_user_role)
     if request.role not in {"admin", "operator", "viewer"}:
         raise HTTPException(
             status_code=400,
