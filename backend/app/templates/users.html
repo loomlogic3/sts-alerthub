@@ -124,7 +124,7 @@ Registered AlertHub users
 <div class="form-panel">
 
 <label>Email</label>
-<input id="email" type="email" placeholder="newuser@sts.local">
+<input id="email" type="email" placeholder="newuser@sts.local" autocomplete="off">
 
 <input id="edit_mode" type="hidden" value="false">
 
@@ -137,12 +137,12 @@ Registered AlertHub users
 
 <label>Password</label>
 <div class="password-wrap">
-<input id="password" type="password" placeholder="Temporary password">
+<input id="password" type="password" placeholder="Temporary password" autocomplete="new-password">
 <button type="button" class="eye-button" onclick="togglePassword()">👁</button>
 </div>
 
 <button id="save_button" onclick="saveUser()">Create User</button>
-<button onclick="resetForm()" style="background:#334155;">Clear</button>
+<button id="clear_button" onclick="resetForm()" style="background:#334155;">Clear</button>
 
 <div id="message" class="message"></div>
 
@@ -154,6 +154,7 @@ Registered AlertHub users
 <input
 id="userSearch"
 type="text"
+autocomplete="off"
 placeholder="Search by email, role, or status..."
 onkeyup="filterUsers()"
 style="width:360px; display:block; margin-top:8px;"
@@ -206,6 +207,7 @@ passwordInput.type=passwordInput.type==="password" ? "text" : "password";
 function resetForm(){
 document.getElementById("form_title").textContent="Create User";
 document.getElementById("save_button").textContent="Create User";
+document.getElementById("clear_button").textContent="Clear";
 document.getElementById("email").value="";
 document.getElementById("email").readOnly=false;
 document.getElementById("password").value="";
@@ -218,6 +220,7 @@ document.getElementById("message").textContent="";
 function editUser(email, role, isActive){
 document.getElementById("form_title").textContent="Edit User";
 document.getElementById("save_button").textContent="Save Changes";
+document.getElementById("clear_button").textContent="Cancel Edit";
 document.getElementById("email").value=email;
 document.getElementById("email").readOnly=true;
 document.getElementById("password").value="";
@@ -286,6 +289,7 @@ return;
 
 await loadUsers();
 
+
 }
 
 async function saveUser(){
@@ -333,6 +337,7 @@ message.textContent="User updated.";
 resetForm();
 await loadUsers();
 
+
 }
 
 async function createUser(){
@@ -369,6 +374,7 @@ document.getElementById("password").value="";
 document.getElementById("role").value="viewer";
 
 await loadUsers();
+
 
 }
 
@@ -411,7 +417,14 @@ row.style.display=text.includes(filter) ? "" : "none";
 });
 }
 
+
+const searchInput=document.getElementById("userSearch");
+if(searchInput){
+searchInput.value="";
+}
+
 loadUsers();
+
 
 </script>
 
