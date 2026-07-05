@@ -237,7 +237,10 @@ return;
 
 const response=await fetch(`/users/${email}/reset-password`,{
 method:"POST",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json",
+"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+},
 body:JSON.stringify({
 new_password:newPassword
 })
@@ -264,7 +267,10 @@ return;
 
 const response=await fetch(`/users/${email}`,{
 method:"PATCH",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json",
+"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+},
 body:JSON.stringify({
 role:role,
 is_active:nextActive
@@ -305,7 +311,10 @@ const email=document.getElementById("email").value;
 
 const response=await fetch(`/users/${email}`,{
 method:"PATCH",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json",
+"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+},
 body:JSON.stringify({
 role:document.getElementById("role").value,
 is_active:true
@@ -334,7 +343,10 @@ message.textContent="Creating user...";
 
 const response=await fetch("/users",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json",
+"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+},
 body:JSON.stringify({
 email:document.getElementById("email").value,
 password:document.getElementById("password").value,
