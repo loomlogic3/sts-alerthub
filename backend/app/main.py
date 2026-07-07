@@ -22,6 +22,7 @@ from backend.app.services.incident_service import (
 )
 from backend.app.services.scheduler_service import start_scheduler
 from backend.app.services.telegram_service import send_notification
+from backend.app.services.token_service import create_access_token
 from backend.app.services.uptime_service import (
     get_uptime_summary,
     list_uptime_checks,
@@ -496,8 +497,18 @@ def login(request: LoginRequest):
         result="success",
     )
 
+    access_token = create_access_token(
+        {
+            "email": user["email"],
+            "role": user["role"],
+            "permissions": get_role_permissions(user["role"]),
+        }
+    )
+
     return {
         "login_success": True,
+        "access_token": access_token,
+        "token_type": "bearer",
         "user": {
             "id": user["id"],
             "email": user["email"],
