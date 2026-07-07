@@ -11,7 +11,7 @@ from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
 from backend.app.services.rbac_service import get_role_permissions
-from backend.app.services.security_service import require_admin
+from backend.app.services.security_service import require_admin, require_operator
 from backend.app.services.user_service import create_user, get_user_by_email, list_users, update_user, update_user_password
 from backend.app.services.audit_service import initialize_audit_table
 from backend.app.services.incident_service import (
@@ -679,7 +679,11 @@ def run_all_monitors():
 
 
 @app.post("/websites")
-def add_website(request: WebsiteCreateRequest):
+def add_website(
+    request: WebsiteCreateRequest,
+    x_user_role: str = Header(default=""),
+):
+    require_operator(x_user_role)
     website = create_website(
         name=request.name,
         url=request.url,
@@ -781,7 +785,12 @@ def get_website_incidents_summary(website_id: int):
 
 
 @app.patch("/websites/{website_id}")
-def patch_website(website_id: int, request: WebsiteUpdateRequest):
+def patch_website(
+    website_id: int,
+    request: WebsiteUpdateRequest,
+    x_user_role: str = Header(default=""),
+):
+    require_operator(x_user_role)
     updated = update_website(
         website_id,
         request.model_dump(exclude_none=True),
@@ -803,7 +812,11 @@ def patch_website(website_id: int, request: WebsiteUpdateRequest):
 
 
 @app.delete("/websites/{website_id}")
-def remove_website(website_id: int):
+def remove_website(
+    website_id: int,
+    x_user_role: str = Header(default=""),
+):
+    require_operator(x_user_role)
     deleted = delete_website(website_id)
 
     record_audit(
