@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
 from backend.app.services.audit_service import initialize_audit_table, record_audit, list_audit_logs
+from backend.app.services.auth_service import get_current_user
 from backend.app.services.database import initialize_database
 from backend.app.services.history_service import list_alerts, record_alert
 from backend.app.services.password_service import hash_password, verify_password
@@ -329,9 +330,10 @@ def create_admin_user(request: AdminCreateRequest):
 @app.post("/users")
 def create_app_user(
     request: UserCreateRequest,
-    x_user_role: str = Header(default=""),
+    authorization: str = Header(default=""),
 ):
-    require_admin(x_user_role)
+    current_user = get_current_user(authorization)
+    require_admin(current_user["role"])
     if request.role not in {"admin", "operator", "viewer"}:
         raise HTTPException(
             status_code=400,
@@ -347,7 +349,7 @@ def create_app_user(
     )
 
     record_audit(
-        user_email="admin",
+        user_email=current_user["email"],
         action="USER_CREATED",
         object_type="user",
         object_name=request.email,
