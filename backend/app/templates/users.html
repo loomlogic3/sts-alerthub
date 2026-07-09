@@ -242,7 +242,8 @@ const response=await fetch(`/users/${email}/reset-password`,{
 method:"POST",
 headers:{
 "Content-Type":"application/json",
-"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+"X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({
 new_password:newPassword
@@ -272,7 +273,8 @@ const response=await fetch(`/users/${email}`,{
 method:"PATCH",
 headers:{
 "Content-Type":"application/json",
-"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+"X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({
 role:role,
@@ -317,7 +319,8 @@ const response=await fetch(`/users/${email}`,{
 method:"PATCH",
 headers:{
 "Content-Type":"application/json",
-"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+"X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({
 role:document.getElementById("role").value,
@@ -350,7 +353,8 @@ const response=await fetch("/users",{
 method:"POST",
 headers:{
 "Content-Type":"application/json",
-"X-User-Role":localStorage.getItem("alerthub_user_role") || ""
+"X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({
 email:document.getElementById("email").value,
