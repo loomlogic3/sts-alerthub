@@ -243,6 +243,7 @@ method:"POST",
 headers:{
 "Content-Type":"application/json",
 "X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`,
 "Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({
@@ -274,6 +275,7 @@ method:"PATCH",
 headers:{
 "Content-Type":"application/json",
 "X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`,
 "Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({
@@ -320,6 +322,7 @@ method:"PATCH",
 headers:{
 "Content-Type":"application/json",
 "X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`,
 "Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({
@@ -354,6 +357,7 @@ method:"POST",
 headers:{
 "Content-Type":"application/json",
 "X-User-Role":localStorage.getItem("alerthub_user_role") || "",
+"Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`,
 "Authorization":`Bearer ${localStorage.getItem("alerthub_access_token") || ""}`
 },
 body:JSON.stringify({

@@ -369,9 +369,10 @@ def create_app_user(
 def reset_user_password(
     email: str,
     request: UserResetPasswordRequest,
-    x_user_role: str = Header(default=""),
+    authorization: str = Header(default=""),
 ):
-    require_admin(x_user_role)
+    current_user = get_current_user(authorization)
+    require_admin(current_user["role"])
     user = get_user_by_email(email)
 
     if not user:
@@ -387,7 +388,7 @@ def reset_user_password(
     )
 
     record_audit(
-        user_email="admin",
+        user_email=current_user["email"],
         action="USER_PASSWORD_RESET",
         object_type="user",
         object_name=email,
@@ -405,9 +406,10 @@ def reset_user_password(
 def update_app_user(
     email: str,
     request: UserUpdateRequest,
-    x_user_role: str = Header(default=""),
+    authorization: str = Header(default=""),
 ):
-    require_admin(x_user_role)
+    current_user = get_current_user(authorization)
+    require_admin(current_user["role"])
     if request.role not in {"admin", "operator", "viewer"}:
         raise HTTPException(
             status_code=400,
@@ -421,7 +423,7 @@ def update_app_user(
     )
 
     record_audit(
-        user_email="admin",
+        user_email=current_user["email"],
         action="USER_UPDATED",
         object_type="user",
         object_name=email,
