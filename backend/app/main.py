@@ -696,9 +696,10 @@ def run_all_monitors():
 @app.post("/websites")
 def add_website(
     request: WebsiteCreateRequest,
-    x_user_role: str = Header(default=""),
+    authorization: str = Header(default=""),
 ):
-    require_operator(x_user_role)
+    current_user = get_current_user(authorization)
+    require_operator(current_user["role"])
     website = create_website(
         name=request.name,
         url=request.url,
@@ -708,7 +709,7 @@ def add_website(
     )
 
     record_audit(
-        user_email=None,
+        user_email=current_user["email"],
         action="WEBSITE_CREATED",
         object_type="website",
         object_name=website.get("name"),
@@ -803,16 +804,17 @@ def get_website_incidents_summary(website_id: int):
 def patch_website(
     website_id: int,
     request: WebsiteUpdateRequest,
-    x_user_role: str = Header(default=""),
+    authorization: str = Header(default=""),
 ):
-    require_operator(x_user_role)
+    current_user = get_current_user(authorization)
+    require_operator(current_user["role"])
     updated = update_website(
         website_id,
         request.model_dump(exclude_none=True),
     )
 
     record_audit(
-        user_email=None,
+        user_email=current_user["email"],
         action="WEBSITE_UPDATED",
         object_type="website",
         object_name=str(website_id),
@@ -829,13 +831,14 @@ def patch_website(
 @app.delete("/websites/{website_id}")
 def remove_website(
     website_id: int,
-    x_user_role: str = Header(default=""),
+    authorization: str = Header(default=""),
 ):
-    require_operator(x_user_role)
+    current_user = get_current_user(authorization)
+    require_operator(current_user["role"])
     deleted = delete_website(website_id)
 
     record_audit(
-        user_email=None,
+        user_email=current_user["email"],
         action="WEBSITE_DELETED",
         object_type="website",
         object_name=str(website_id),
