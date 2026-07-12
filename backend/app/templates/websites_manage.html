@@ -268,7 +268,10 @@
         websiteId ? `/websites/${websiteId}` : '/websites',
         {
           method: websiteId ? 'PATCH' : 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('alerthub_access_token') || ''}`
+          },
           body: JSON.stringify(payload)
         }
       );
@@ -294,7 +297,10 @@
       }
 
       const response = await fetch(`/websites/${websiteId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('alerthub_access_token') || ''}`
+        }
       });
 
       if (!response.ok) {
