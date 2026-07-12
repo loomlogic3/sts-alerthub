@@ -511,8 +511,10 @@
             <td>${avgResponse}</td>
             <td class="muted">${website.last_checked_at || 'Never'}</td>
             <td>
-              ${hasPermission('monitors:run') ? '<button onclick="checkNow()">Check Now</button>' : ''}
-              <button class="secondary-button" onclick="viewWebsite(${website.id})">View</button>
+              <div class="action-buttons">
+                ${hasPermission('monitors:run') ? '<button onclick="checkNow()">Check Now</button>' : ''}
+                <button class="secondary-button" onclick="viewWebsite(${website.id})">View</button>
+              </div>
             </td>
           </tr>
         `);
